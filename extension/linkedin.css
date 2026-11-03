@@ -1,0 +1,19 @@
+/* SPDX-License-Identifier: MIT */
+@media screen {
+  html[data-hsdm-theme="dark"] :is(button, [role="button"], a):focus-visible {
+    outline: 2px solid #9acbff !important;
+    outline-offset: 3px !important;
+  }
+  html[data-hsdm-theme="dark"] :is(button, [role="button"]):hover {
+    background-color: #283647 !important;
+  }
+  html[data-hsdm-theme="dark"] :is(input, textarea, [contenteditable="true"]):not([type="checkbox"]):not([type="radio"]) {
+    background-color: #191f28 !important;
+    color: #e2e8f0 !important;
+    caret-color: #e2e8f0 !important;
+  }
+  /* Only interface icon roots inherit text color. Photos and inline artwork keep their fills. */
+  html[data-hsdm-theme="dark"] :is(button, nav, [role="navigation"]) svg {
+    fill: currentColor;
+  }
+}

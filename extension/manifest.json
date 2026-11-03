@@ -1,20 +1,27 @@
 {
   "manifest_version": 3,
-  "name": "HubSpot Dark Mode",
-  "version": "0.1.0",
-  "description": "A local, open-source dark theme for HubSpot that follows your system appearance in real time.",
+  "name": "GTM Dark Mode",
+  "version": "0.2.0",
+  "description": "Local, open-source dark mode for HubSpot and LinkedIn, with live system appearance syncing.",
   "minimum_chrome_version": "111",
   "permissions": ["storage"],
   "action": {
-    "default_title": "HubSpot Dark Mode",
+    "default_title": "GTM Dark Mode",
     "default_popup": "popup.html",
     "default_icon": {"16": "icons/icon16.png", "32": "icons/icon32.png"}
   },
   "icons": {"16": "icons/icon16.png", "32": "icons/icon32.png", "48": "icons/icon48.png", "128": "icons/icon128.png"},
   "content_scripts": [{
     "matches": ["https://app.hubspot.com/*", "https://app-eu1.hubspot.com/*", "https://app-na1.hubspot.com/*", "https://app-na2.hubspot.com/*", "https://app-ap1.hubspot.com/*"],
-    "css": ["theme.css"],
+    "css": ["theme.css", "hubspot.css"],
     "js": ["palette.js", "engine.js", "content.js"],
+    "run_at": "document_start",
+    "all_frames": true,
+    "world": "ISOLATED"
+  }, {
+    "matches": ["https://www.linkedin.com/*", "https://linkedin.com/*"],
+    "css": ["theme.css", "linkedin.css"],
+    "js": ["palette.js", "linkedin.js", "content.js"],
     "run_at": "document_start",
     "all_frames": true,
     "world": "ISOLATED"

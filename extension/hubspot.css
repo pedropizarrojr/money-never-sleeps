@@ -1,0 +1,46 @@
+/* SPDX-License-Identifier: MIT
+   Keep the entire navigation rail on one surface, including empty space. */
+@media screen {
+  html[data-hsdm-theme="dark"] #hs-vertical-nav {
+    background-color: #1b222c !important;
+    color: #dce5f0 !important;
+    --trellis-color-global-shell-fill-nav-item-default: #1b222c !important;
+  }
+  html[data-hsdm-theme="dark"] #hs-vertical-nav :is(
+    #sidebar-scrollable-pane, .primary-nav-menu, [role="menu"],
+    [class*="VerticalNavContainer__VNCContent"],
+    [class*="VerticalNavContainer__VNCMain"],
+    [class*="ScrollablePane__ScrollablePaneContainer"]
+  ) {
+    background-color: transparent !important;
+    background-image: none !important;
+    color: inherit !important;
+  }
+  html[data-hsdm-theme="dark"] #hs-vertical-nav :is(
+    [class*="ScrollArrow"], [class*="ScrollOverhang"],
+    [class*="VerticalNavContainer"]
+  ) {
+    background-color: #1b222c !important;
+    background-image: none !important;
+    box-shadow: none !important;
+  }
+  html[data-hsdm-theme="dark"] #hs-vertical-nav .primary-nav-menu-item {
+    color: #dce5f0 !important;
+    background-color: transparent !important;
+  }
+  html[data-hsdm-theme="dark"] #hs-vertical-nav .primary-nav-menu-item:is(:hover, :focus-within) {
+    background-color: #283647 !important;
+    color: #fff !important;
+  }
+  html[data-hsdm-theme="dark"] #hs-vertical-nav :is(
+    .primary-nav-menu-item.isHighlighted,
+    .primary-nav-menu-item.isHighlighted [class*="PrimarySidebarItemLayout__StyledItemWrapper"],
+    [aria-current="page"], [aria-selected="true"]
+  ) {
+    background-color: #2a425c !important;
+    color: #e8f2ff !important;
+  }
+  html[data-hsdm-theme="dark"] #hs-vertical-nav :is(button, a) {
+    color: inherit !important;
+  }
+}

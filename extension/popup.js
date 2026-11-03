@@ -9,7 +9,7 @@
   function render() {
     document.querySelector(`input[value="${mode}"]`).checked = true;
     status.textContent = mode === "system" ? `Following your system. Currently ${system.matches ? "dark" : "light"}.` :
-      mode === "dark" ? "Dark mode is on for HubSpot." : "HubSpot’s original theme is on.";
+      mode === "dark" ? "Dark mode is on for HubSpot and LinkedIn." : "Each site’s original theme is on.";
   }
   try {
     const settings = await chrome.storage.local.get({ mode: "system" });

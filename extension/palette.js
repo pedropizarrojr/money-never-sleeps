@@ -48,7 +48,7 @@
       if (/(?:^|-)(fg|text|icon)(?:-|$)|-color(?:-|$)/i.test(property)) return "foreground";
       return null;
     }
-    if (/^background(?:-color)?$/.test(property)) return "background";
+    if (/^background(?:-color|-image)?$/.test(property) || property === "box-shadow") return "background";
     if (/^(?:border(?:-(?:top|right|bottom|left|block|inline)(?:-(?:start|end))?)?(?:-color)?|outline(?:-color)?|column-rule(?:-color)?)$/.test(property)) return "border";
     if (/^(?:color|text-decoration-color|caret-color|-webkit-text-fill-color)$/.test(property)) return "foreground";
     return null;
@@ -77,7 +77,7 @@
 
   function transformValue(property, value) {
     const role = roleFor(property);
-    // Never rewrite URLs, images, shadows, sizing, SVG fills, or chart colors.
+    // Never rewrite URLs, image assets, sizing, SVG fills, or chart colors.
     if (!role || /url\(|(?:image-set|paint)\(/i.test(value)) return value;
     return value.replace(/#[\da-f]{3,8}\b|rgba?\([^)]*\)|\b(?:white|black)\b/gi,
       (color) => transformColor(color, role));
