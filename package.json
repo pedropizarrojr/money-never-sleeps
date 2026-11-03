@@ -1,6 +1,6 @@
 {
   "name": "money-never-sleeps",
-  "version": "0.4.0",
+  "version": "0.4.1",
   "private": true,
   "description": "System-synced dark mode for HubSpot, LinkedIn and Google Workspace.",
   "license": "MIT",

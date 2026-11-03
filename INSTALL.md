@@ -26,13 +26,18 @@ page. Keep the folder in place while the unpacked extension is installed.
 
 ## Upgrading from an earlier version
 
-Replace the contents of the same installed folder with the unzipped 0.4.0 files,
+Replace the contents of the same installed folder with the unzipped 0.4.1 files,
 then reload the extension in `chrome://extensions`. Your saved appearance setting
 is preserved when the installed folder stays the same. Chrome may ask you to
 approve the added Google Drive, Docs/Sheets and Calendar site access. Approve
 that access for Google support, then refresh those tabs once after updating.
 
 The extension now appears as **Money Never Sleeps** in Chrome.
+
+After reloading or updating an unpacked extension, refresh existing supported
+tabs once. An old tab can retain the previous content script and stop receiving
+the newly loaded extension's settings changes. This is an update step, not an
+automatic reload during ordinary use.
 
 ## Google document colors
 

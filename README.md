@@ -17,7 +17,7 @@ An independent community project. Not affiliated with or endorsed by HubSpot, Li
 
 ## Install
 
-[Download the extension ZIP](https://github.com/pedropizarrojr/money-never-sleeps/raw/refs/heads/main/downloads/money-never-sleeps-0.4.0.zip)
+[Download the extension ZIP](https://github.com/pedropizarrojr/money-never-sleeps/raw/refs/heads/main/downloads/money-never-sleeps-0.4.1.zip)
 and unzip it. In Chrome, open
 `chrome://extensions`, enable **Developer mode**, click **Load unpacked**, and
 select the folder containing `manifest.json`. Refresh existing supported tabs once.
@@ -40,6 +40,14 @@ The extension listens to `matchMedia('(prefers-color-scheme: dark)')` change
 events in each matched tab/frame. A local storage change listener propagates
 manual overrides. Resuming a hidden tab or restoring a page also rechecks the
 current preference.
+
+In Light mode, or System while the OS is light, the theme engines are stopped:
+no engine observers, polling timers, queued animation frames or stylesheet
+generation remain active. A saved Light override is read before an engine can
+start. Returning to a light tab does not run cleanup scans. Manual overrides
+detach the OS-change listener; System retains it so it can turn dark mode on
+when needed. Small startup/script/CSS parsing costs and idle appearance listeners
+remain, so this is not a claim of literally zero browser overhead.
 
 ## How it works
 
@@ -120,6 +128,16 @@ This extension provides a shared control for LinkedIn and HubSpot.
 The default uses warm charcoal and layered grays, lighter raised surfaces, off-white text and
 visible focus indicators. Curated text and control colors have automated contrast
 checks. See [DESIGN.md](DESIGN.md) for the palette, rationale and primary references.
+
+## Version 0.4.1
+
+- Wait for the saved mode before starting theme work, including Light on a dark OS.
+- Make engine start/stop operations transition-only and remove light-mode refresh calls.
+- Avoid repeated HubSpot cleanup queries and release generated CSS caches on stop.
+- Verify timer/observer/frame cancellation and zero engine work during repeated idle/light events.
+- Fix the bright formula-bar wrapper found during live Sheets inspection.
+
+See [installed-version QA and performance limits](docs/qa-0.4.1/README.md).
 
 ## Version 0.4.0
 
