@@ -10,6 +10,39 @@
     color: #e3e0de !important;
     border-color: #625d57 !important;
   }
+  /* Current LinkedIn uses this shared white-surface utility on nested profile
+     details, recommendation headers and Sales Insights. It can become white
+     after the one-pass adapter has already visited the node. CSS covers the
+     class immediately, including late styles/insertion, without another scan.
+     Keep this observed utility separate from generated layout classes. */
+  html[data-hsdm-theme="dark"] .d7ibtc {
+    background-color: #2d2b28 !important;
+    color: #e3e0de !important;
+  }
+  /* The notifications renderer gives unread rows a translucent light-blue
+     utility before their content is hydrated. Keep the blue unread dot, but
+     use an opaque raised neutral surface from the first matching paint. */
+  html[data-hsdm-theme="dark"] main [aria-label="Primary content"] .d7ic9g.d7ic9p {
+    background-color: #383530 !important;
+    color: #e3e0de !important;
+  }
+  html[data-hsdm-theme="dark"] main [aria-label="Primary content"] .d7ic9g.d7ic9p:hover {
+    background-color: #454039 !important;
+  }
+  html[data-hsdm-theme="dark"] main [aria-label="Primary content"] .d7ic9g.d7ic9p :is(p,span,strong) {
+    background-color: transparent !important;
+  }
+  /* These cards use a low-alpha box shadow, not a border. border-color alone
+     leaves the sections almost indistinguishable from the page background. */
+  html[data-hsdm-theme="dark"] main :is(section[componentkey], .artdeco-card) {
+    box-shadow: 0 0 0 1px #736d66 !important;
+    border-color: #736d66 !important;
+  }
+  /* The badge is an SVG with a hardcoded black wordmark. Change only its black
+     path; the blue compass and white details keep their original brand colors. */
+  html[data-hsdm-theme="dark"] svg[role="img"][aria-label="Sales Navigator"] path[fill="#000"] {
+    fill: #e3e0de !important;
+  }
   /* LinkedIn explicitly gives ad iframes color-scheme: light. Chrome derives
      an embedded document's prefers-color-scheme from the iframe element, so
      the frame's System mode otherwise stays light even on a dark parent page.
