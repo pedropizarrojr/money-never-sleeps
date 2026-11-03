@@ -7,13 +7,13 @@ const content = fs.readFileSync('extension/content.js', 'utf8');
 
 function harness({ systemDark = false, stored = 'system', delayed = false, host = 'app.hubspot.com', pathname = '/', engine = true, canvas = true } = {}) {
   const attributes = {}, listeners = {}, docListeners = {};
-  const system = { matches: systemDark, addEventListener: (_, fn) => { listeners.system = fn; } };
+  const system = { matches: systemDark, addEventListener: (_, fn) => { listeners.system = fn; }, removeEventListener: () => { delete listeners.system; } };
   let resolve;
   const initial = delayed ? new Promise(r => { resolve = r; }) : Promise.resolve({ mode: stored, darkGoogleCanvas: canvas });
   const h = { starts: 0, stops: 0, refreshes: 0, attributes, system,
     emitMode(value, area = 'local') { listeners.storage({mode: {newValue: value}}, area); },
     emitCanvas(value) { listeners.storage({darkGoogleCanvas: {newValue: value}}, 'local'); },
-    emitSystem(value) { system.matches = value; listeners.system(); },
+    emitSystem(value) { system.matches = value; listeners.system?.(); },
     finishInitial(value, darkGoogleCanvas = true) { resolve({mode:value, darkGoogleCanvas}); },
     resume() { docListeners.visibilitychange(); },
     pageShow() { listeners.pageshow(); }
@@ -110,4 +110,24 @@ test('unrequested Google products are not classified as supported apps', async (
     const h = harness({host, pathname, engine:false}); await flush();
     assert.equal(h.attributes['data-hsdm-app'], undefined);
   }
+});
+
+test('a saved Light override never starts an engine even on a dark OS with a slow settings read', async () => {
+  const h = harness({systemDark:true, delayed:true});
+  h.resume(); h.pageShow(); h.emitSystem(false); h.emitSystem(true);
+  assert.equal(h.starts, 0);
+  h.finishInitial('light'); await flush();
+  for (let i=0; i<1000; i++) { h.resume(); h.pageShow(); h.emitSystem(i%2===0); }
+  assert.equal(h.attributes['data-hsdm-theme'], 'light');
+  assert.deepEqual([h.starts,h.stops,h.refreshes], [0,0,0]);
+});
+test('System on a light OS performs no engine calls while idle or when tabs resume', async () => {
+  const h = harness(); await flush();
+  for (let i=0; i<1000; i++) { h.resume(); h.pageShow(); }
+  assert.deepEqual([h.starts,h.stops,h.refreshes], [0,0,0]);
+  h.emitSystem(true); assert.equal(h.starts,1);
+  h.emitSystem(true); assert.equal(h.starts,1);
+  h.emitSystem(false); assert.equal(h.stops,1);
+  for (let i=0; i<1000; i++) { h.resume(); h.pageShow(); }
+  assert.deepEqual([h.starts,h.stops,h.refreshes], [1,1,0]);
 });

@@ -7,7 +7,7 @@ function decl(values) {
   return Object.assign(Object.keys(values), {getPropertyValue: name => values[name]});
 }
 function harness() {
-  let node, interval, observerCallback, load, reads = 0;
+  let node, interval, observerCallback, load, reads = 0, queries = 0, observed = false;
   let clock = 0, serial = 0;const frames = new Map(), delays = new Map();
   const sheet = {cssRules: [], ownerNode: {textContent: ''}, media: {mediaText: ''}};
   const inline = {style: decl({color:'#333'}), attr: {}, closest() {return null;},
@@ -16,23 +16,24 @@ function harness() {
   const doc = {hidden:false, styleSheets:[sheet],
     documentElement:{nodeType:1}, head:{append(value){node=value;node.isConnected=true;}},
     createElement() {return {textContent:'',dataset:{},isConnected:false,remove(){this.isConnected=false;}};},
-    querySelectorAll(q) {return q==='[style]' ? [inline] : [inline];},
-    addEventListener(name,fn){if(name==='load')load=fn;},removeEventListener(){}};
+    querySelectorAll(q) {queries++;return q==='[style]' ? [inline] : [inline];},
+    addEventListener(name,fn){if(name==='load')load=fn;},removeEventListener(){load=null;}};
   const context = vm.createContext({document:doc,performance:{now:()=>clock},
     CSSRule:{STYLE_RULE:1,IMPORT_RULE:3,MEDIA_RULE:4,SUPPORTS_RULE:12},
     getComputedStyle() {reads++;return decl({'--trellis-color-text-primary':'#333','--t-sys-color-foundational-bg-normal-default':'#fff'});},
-    MutationObserver:class {constructor(fn){observerCallback=fn;}observe(){}disconnect(){}},
+    MutationObserver:class {constructor(fn){observerCallback=fn;}observe(){observed=true;}disconnect(){observed=false;}},
     queueMicrotask(fn){fn();},
     requestAnimationFrame(fn){const id=++serial;frames.set(id,fn);return id;},cancelAnimationFrame(id){frames.delete(id);},
     setTimeout(fn){const id=++serial;delays.set(id,fn);return id;},clearTimeout(id){delays.delete(id);},
-    setInterval(fn){interval=fn;return 1;},clearInterval(){}
+    setInterval(fn){interval=fn;return 1;},clearInterval(){interval=null;}
   });
   vm.runInContext(fs.readFileSync('extension/palette.js','utf8'),context);
   vm.runInContext(fs.readFileSync('extension/engine.js','utf8'),context);
   function drain(){while(frames.size||delays.size){clock+=100;for(const [id,fn] of [...delays]){delays.delete(id);fn();}for(const [id,fn] of [...frames]){frames.delete(id);fn();}}}
   const engine={start(){context.HSDMEngine.start();drain();},stop:context.HSDMEngine.stop,refresh(){context.HSDMEngine.refresh();drain();}};
   return {engine,drain,pending:()=>frames.size+delays.size,load:event=>load(event),realEngine:context.HSDMEngine,sheet,doc,inline,node:()=>node,reads:()=>reads,
-    tick:()=>{interval();drain();}, mutate:records=>observerCallback(records),
+    queries:()=>queries,resources:()=>({interval:!!interval,observer:observed,loadListener:!!load}),
+    tick:()=>{interval?.();drain();}, mutate:records=>observerCallback(records),
     rule:(selectorText,values)=>({type:1,selectorText,style:decl(values)})};
 }
 
@@ -105,4 +106,19 @@ test('HubSpot work is coalesced into a frame and stopping cancels queued callbac
   assert.equal(h.pending(),1);h.drain();assert.equal(h.reads(),1);
   h.realEngine.refresh();assert.equal(h.pending(),1);h.realEngine.stop();
   assert.equal(h.pending(),0);h.drain();assert.equal(h.reads(),1);
+});
+
+test('inactive HubSpot stop and refresh calls do no DOM or style work',()=>{
+  const h=harness();
+  for(let i=0;i<1000;i++){h.realEngine.stop();h.realEngine.refresh();}
+  assert.equal(h.queries(),0);assert.equal(h.reads(),0);assert.equal(h.pending(),0);
+  assert.deepEqual(h.resources(),{interval:false,observer:false,loadListener:false});
+});
+test('HubSpot releases all recurring resources in Light and only cleans markers once',()=>{
+  const h=harness();h.engine.start();h.realEngine.refresh();h.engine.stop();
+  const queries=h.queries(),reads=h.reads();
+  for(let i=0;i<1000;i++){h.realEngine.stop();h.realEngine.refresh();h.tick();}
+  assert.equal(h.queries(),queries);assert.equal(h.reads(),reads);assert.equal(h.pending(),0);
+  assert.deepEqual(h.resources(),{interval:false,observer:false,loadListener:false});
+  h.engine.start();assert.equal(h.reads(),reads+1);assert.equal(h.node().isConnected,true);
 });

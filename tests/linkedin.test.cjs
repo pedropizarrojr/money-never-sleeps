@@ -114,3 +114,15 @@ test('each frame and total enhancement work are bounded on a large document',()=
   const host=h.root.children[0];host.id='interop-outlet';const tree=h.shadow(host);
   h.tick();h.drain();assert.ok(h.style(tree),'chat static CSS still installs after the budget');
 });
+
+test('LinkedIn Light mode has no observers, timers, queued frames or repeated cleanup work',()=>{
+  const h=harness(1000);
+  for(let i=0;i<1000;i++){h.engine.stop();h.engine.refresh();h.tick();}
+  assert.equal(h.stats.reads,0);assert.equal(h.stats.bulkScans,0);
+  assert.deepEqual(h.resources(),{interval:false,observers:0,pending:0});
+  h.engine.start();h.drain();h.engine.stop();
+  const before={...h.stats};
+  for(let i=0;i<1000;i++){h.engine.stop();h.engine.refresh();h.tick();}
+  assert.deepEqual(h.stats,before);
+  assert.deepEqual(h.resources(),{interval:false,observers:0,pending:0});
+});
