@@ -10,14 +10,15 @@ It follows your system appearance in real time, with manual Dark and Light overr
 - **Warm gray across apps:** Google uses static CSS, with no page scans, polling or scroll handlers.
 - **Document controls:** optional filters darken Docs pages and Sheets grids without editing file contents. Turn off **Dark document pages** when checking original image, chart or cell colors.
 - **Media stays intact outside the editor canvas:** HubSpot, LinkedIn and Drive images are not inverted. Navigation icons inherit readable text colors.
-- **Local only:** no network requests, tracking, remote code, account connection or backend.
+- **Automatic visual fixes:** downloaded appearance rules are cached locally. Checks run only in dark mode and can be disabled.
+- **No tracking or account connection:** no page data is sent to GitHub. No downloaded JavaScript or backend is needed.
 - **MIT licensed:** use it, improve it, and share it.
 
 An independent community project. Not affiliated with or endorsed by HubSpot, LinkedIn or Google.
 
 ## Install
 
-[Download the extension ZIP](https://github.com/pedropizarrojr/money-never-sleeps/raw/refs/heads/main/downloads/money-never-sleeps-0.4.1.zip)
+[Download the extension ZIP](https://github.com/pedropizarrojr/money-never-sleeps/raw/refs/heads/main/downloads/money-never-sleeps-0.5.0.zip)
 and unzip it. In Chrome, open
 `chrome://extensions`, enable **Developer mode**, click **Load unpacked**, and
 select the folder containing `manifest.json`. Refresh existing supported tabs once.
@@ -50,6 +51,21 @@ when needed. Small startup/script/CSS parsing costs and idle appearance listener
 remain, so this is not a claim of literally zero browser overhead.
 
 ## How it works
+
+### Automatic theme updates
+
+Install 0.5.0 once to enable automatic colors and CSS fixes. The extension checks
+this repository's validated theme channel daily while a supported page is visible
+and dark. It applies cached rules without waiting for GitHub, shares downloads
+across tabs, and stops update timers and downloads in light mode. No page reloads
+or desktop helper are used. The popup has an off switch and a manual check button.
+
+JavaScript, permissions, new site access and pre-paint fallback changes still need
+a manual extension update. Only the supported appearance rules from the CSS files
+update automatically. See [automatic update publishing and limits](docs/automatic-updates.md)
+and [privacy](PRIVACY.md) for the GitHub request and local cache details.
+
+### Page styling
 
 Manifest V3 injects the CSS and scripts at `document_start`. The CSS provides an
 early dark background and component fallbacks. The theme engine reads accessible
@@ -128,6 +144,14 @@ This extension provides a shared control for LinkedIn and HubSpot.
 The default uses warm charcoal and layered grays, lighter raised surfaces, off-white text and
 visible focus indicators. Curated text and control colors have automated contrast
 checks. See [DESIGN.md](DESIGN.md) for the palette, rationale and primary references.
+
+## Version 0.5.0
+
+- Added cached, automatic theme-rule updates from the project's fixed GitHub channel.
+- Added a popup off switch, check button and theme/extension version status.
+- Restricted remote data to screen-only, dark-scoped appearance rules. No downloaded JavaScript, resource URLs or layout changes.
+- Stopped update work in light mode, paused hidden-page scheduling and limited downloads to one daily check across tabs.
+- Added a GitHub Actions publisher for validated CSS updates, plus failure, cancellation, scope and cache regression tests.
 
 ## Version 0.4.1
 
@@ -213,7 +237,7 @@ npm run check
 npm run package
 ```
 
-The ZIP is written to `dist/money-never-sleeps-0.3.4.zip`, with `manifest.json` at
+The ZIP is written to `dist/money-never-sleeps-0.5.0.zip`, with `manifest.json` at
 its root. Packaging uses fixed timestamps for reproducible output.
 
 For a synthetic browser fixture, run `npm run preview` locally and visit

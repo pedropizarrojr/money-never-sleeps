@@ -1,6 +1,6 @@
 {
   "name": "money-never-sleeps",
-  "version": "0.4.1",
+  "version": "0.5.0",
   "private": true,
   "description": "System-synced dark mode for HubSpot, LinkedIn and Google Workspace.",
   "license": "MIT",
@@ -9,7 +9,8 @@
     "check": "node scripts/check.cjs",
     "package": "python3 scripts/package.py",
     "preview": "python3 -m http.server 8765 --bind 127.0.0.1",
-    "benchmark": "node scripts/benchmark.cjs"
+    "benchmark": "node scripts/benchmark.cjs",
+    "theme:build": "node scripts/build-theme.cjs"
   },
   "engines": {
     "node": ">=20"

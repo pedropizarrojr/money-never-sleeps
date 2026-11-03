@@ -26,11 +26,13 @@ page. Keep the folder in place while the unpacked extension is installed.
 
 ## Upgrading from an earlier version
 
-Replace the contents of the same installed folder with the unzipped 0.4.1 files,
+Replace the contents of the same installed folder with the unzipped 0.5.0 files,
 then reload the extension in `chrome://extensions`. Your saved appearance setting
 is preserved when the installed folder stays the same. Chrome may ask you to
-approve the added Google Drive, Docs/Sheets and Calendar site access. Approve
-that access for Google support, then refresh those tabs once after updating.
+approve the added Google Drive, Docs/Sheets and Calendar site access if upgrading
+from an older release. Version 0.5.0 also adds raw.githubusercontent.com access for
+the theme updater. Its worker only downloads this project's public theme file.
+Review that access, then refresh supported tabs once after updating.
 
 The extension now appears as **Money Never Sleeps** in Chrome.
 
@@ -38,6 +40,24 @@ After reloading or updating an unpacked extension, refresh existing supported
 tabs once. An old tab can retain the previous content script and stop receiving
 the newly loaded extension's settings changes. This is an update step, not an
 automatic reload during ordinary use.
+
+## Automatic theme updates
+
+After installing 0.5.0, colors and CSS fixes can update automatically. A visible
+dark page checks the GitHub theme channel at most once per day across the profile.
+Hidden pages pause checks. Light mode stops update work. The current theme renders
+immediately from bundled or cached rules; GitHub is never on the page-load path.
+
+The popup's **Automatic theme updates** switch disables checks and restores the
+bundled theme. **Check for theme updates** requests an immediate check while dark
+mode is on, at most once per minute. No site is automatically reloaded. Failed or
+invalid downloads preserve the last working theme.
+
+Full extension updates are still manual. Updating JavaScript, permissions, site
+access, the document-start fallback or the updater itself requires replacing the
+installed files and reloading the extension as above. New theme rules are scoped
+to the extension version they were built for. An incompatible channel is skipped,
+and the popup indicates which extension version it needs.
 
 ## Google document colors
 

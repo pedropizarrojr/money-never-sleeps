@@ -4,7 +4,8 @@ Keep the extension focused on HubSpot, LinkedIn, Drive, Docs, Sheets and Calenda
 dependencies unless a concrete compatibility issue requires them. Do not add
 tracking, remote scripts, credentials, customer data, or real CRM fixtures.
 
-Run `npm test`, `npm run check`, and `npm run package` before opening a pull request.
+Run `npm test`, `npm run check`, `npm run theme:build` and `npm run package` before opening a pull request.
+See [automatic theme publishing](docs/automatic-updates.md) before changing page CSS.
 
 ## Manual verification
 
@@ -22,7 +23,8 @@ Run `npm test`, `npm run check`, and `npm run package` before opening a pull req
    hover and selected states, and expanded navigation.
 9. Check status badges, charts, media, email previews and printed output.
 10. Confirm that toggling Light restores the original styling, and that the
-   extension makes no network requests.
+   extension makes no network requests in Light mode. In Dark mode only the fixed,
+   throttled GitHub appearance-data request is expected when updates are enabled.
 11. Check Drive Home, My Drive, grid/list layouts, search and menus; Calendar week,
     month, event popovers and settings. Calendar event colors should keep their identity.
 12. Check Docs and Sheets menus, toolbars, tabs, side panels and formula editing.
@@ -30,7 +32,11 @@ Run `npm test`, `npm run check`, and `npm run package` before opening a pull req
     original-color mode, then check print preview uses original formatting.
 13. Compare loading and scrolling with the extension enabled and disabled. Do not
     infer browser latency from the unit-test runtime. Google must not start a
-    scanning engine, periodic timer or per-scroll JavaScript handler.
+    scanning engine or per-scroll JavaScript handler. Its updater may have one
+    daily timeout in a visible dark tab; Light mode must have no updater timer.
+14. With synthetic data, test a compatible new theme revision, an incompatible
+    version, offline/invalid downloads, the update off switch, and a mode switch
+    during a pending check. Confirm cached rules update without any page reload.
 
 When filing an issue, include Chrome and extension versions, the HubSpot tool,
 steps to reproduce, and a redacted screenshot if useful. Never include private
