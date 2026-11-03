@@ -7,6 +7,7 @@ assert.equal(manifest.manifest_version, 3);
 assert.deepEqual(manifest.permissions, ['storage']);
 assert.equal(manifest.host_permissions, undefined);
 assert.equal(manifest.content_scripts.length, 2);
+assert.equal(manifest.content_scripts[1].match_origin_as_fallback, true, 'LinkedIn-created blank/blob ad frames must receive the theme');
 for (const script of manifest.content_scripts) {
   assert.equal(script.run_at, 'document_start');
   assert.equal(script.all_frames, true);
