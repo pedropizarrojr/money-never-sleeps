@@ -11,14 +11,15 @@ function harness(count = 3) {
     return {nodeType:1,tagName:tag,isConnected:true,attrs:{},children:[],colors:{color:'rgba(0, 0, 0, 0.9)','background-color':'rgb(255, 255, 255)',...colors},
       querySelectorAll() {return this.children.flatMap(child=>[child,...child.querySelectorAll('*')]);},
       closest(selector) {if(selector.includes('data-hsdm-owned')&&this.dataset?.hsdmOwned)return this;
-        return ['IMG','SVG','VIDEO','CANVAS','STYLE','SCRIPT'].includes(this.tagName) ? this : null;},
+        return selector.split(',').map(s=>s.trim().toUpperCase()).includes(this.tagName) ? this : null;},
       getRootNode(){return this.ownerRoot || doc;},
+      getAttribute(key){return this.attrs[key] ?? null;},
       setAttribute(key,value){this.attrs[key]=value;},removeAttribute(key){delete this.attrs[key];},
       remove(){this.isConnected=false;},append(child){this.children.push(child);child.ownerRoot=this.nodeType===11?this:doc;if(child.tagName==='STYLE')sheets.push(child);}};
   }
   const root=node('HTML'),head=node('HEAD');
   root.children = Array.from({length:count},()=>node());
-  doc={documentElement:root,head,hidden:false,
+  doc={documentElement:root,head,hidden:false,styleSheets:[],
     getElementById(id){return root.querySelectorAll('*').find(n=>n.id===id);},
     createElement:()=>({...node('STYLE'),dataset:{},textContent:'',disabled:false}),
     addEventListener(){},removeEventListener(){}};
@@ -33,7 +34,7 @@ function harness(count = 3) {
   function flushMicrotasks(){while(microtasks.length)microtasks.shift()();}
   function drain(){let guard=0;while(frames.size||microtasks.length){assert.ok(++guard<50,'Work settles');flushMicrotasks();if(frames.size){const [id,fn]=frames.entries().next().value;frames.delete(id);fn();}}}
   function shadow(host){const tree={nodeType:11,host,isConnected:true,children:[],querySelectorAll:root.querySelectorAll,append:root.append};host.shadowRoot=tree;return tree;}
-  return {engine:context.HSDMEngine,root,node,frames,drain,shadow,tick:()=>interval?.(),
+  return {engine:context.HSDMEngine,root,node,doc,frames,drain,shadow,tick:()=>interval?.(),
     flushMicrotasks,pending:()=>frames.size+microtasks.length,
     style:(tree=doc)=>sheets.find(s=>s.isConnected&&s.ownerRoot===tree)||sheets.find(s=>s.ownerRoot===tree),
     mutate:(records,target=root)=>callbacks.get(target)(records)};
@@ -109,4 +110,34 @@ test('messaging header symbols without fill attributes get explicit white fills'
   assert.match(h.style(tree).textContent,/msg-overlay-bubble-header__controls button/);
   assert.match(h.style(tree).textContent,/:is\(svg,li-icon\)\{color:#fff !important;fill:#fff !important;/);
   assert.match(h.style(tree).textContent,/svg :is\(use,path\)\{fill:inherit !important;/);
+});
+
+test('late CSS-in-JS rules restyle existing labels, while unchanged sheets do no work',()=>{
+  const h=harness();const label=h.root.children[0];
+  label.colors={color:'rgb(255, 255, 255)'};
+  const sheet={cssRules:[],disabled:false};h.doc.styleSheets.push(sheet);
+  h.engine.start();h.drain();assert.equal(label.attrs['data-hsdm-li'],undefined);
+  h.tick();assert.equal(h.pending(),0);
+  label.colors.color='rgba(0, 0, 0, 0.75)';sheet.cssRules.push({});
+  h.tick();h.drain();assert.ok(label.attrs['data-hsdm-li']);
+  assert.match(h.style().textContent,/90\.0% \/ 0\.750/);
+  h.tick();assert.equal(h.pending(),0);
+});
+
+test('page style text changes trigger a rescan but owned style changes do not',()=>{
+  const h=harness();h.engine.start();h.drain();
+  const style=h.node('STYLE');style.matches=selector=>selector.includes('style');
+  h.mutate([{target:style,type:'childList',addedNodes:[],removedNodes:[]}]);
+  assert.ok(h.pending());h.drain();
+  h.mutate([{target:h.style(),type:'childList',addedNodes:[],removedNodes:[]}]);
+  assert.equal(h.pending(),0);
+});
+
+test('hydration marker removal is repaired without reacting to the engine own writes',()=>{
+  const h=harness();h.engine.start();h.drain();const label=h.root.children[0];
+  const id=label.attrs['data-hsdm-li'];label.removeAttribute('data-hsdm-li');
+  h.mutate([{target:label,type:'attributes',attributeName:'data-hsdm-li'}]);
+  h.drain();assert.equal(label.attrs['data-hsdm-li'],id);
+  h.mutate([{target:label,type:'attributes',attributeName:'data-hsdm-li'}]);
+  assert.equal(h.pending(),0);
 });

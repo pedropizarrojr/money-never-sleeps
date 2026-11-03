@@ -65,3 +65,14 @@ test('lightweight stylesheet polling detects inserted rules without rebuilding u
   assert.match(h.node().textContent,/:is\(\.loading-row\)/);
   assert.equal(h.reads(),2);
 });
+
+test('pseudo-elements stay outside is() and every selector remains dark-scoped',()=>{
+  const h=harness();
+  h.sheet.cssRules.push(h.rule('.shimmer::after, :is(.a, .b):not([title="a,b"])::before',{background:'linear-gradient(white, #ebebeb)'}));
+  h.engine.start();const css=h.node().textContent;
+  assert.match(css,/:is\(\.shimmer\)::after/);
+  assert.match(css,/:where\(html\[data-hsdm-theme="dark"\]\) \.shimmer::after/);
+  assert.match(css,/:is\(:is\(\.a, \.b\):not\(\[title="a,b"\]\)\)::before/);
+  assert.doesNotMatch(css,/:is\(\.shimmer::after\)/);
+  assert.match(css,/linear-gradient\(hsl/);
+});
