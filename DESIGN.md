@@ -1,18 +1,20 @@
 # A usable dark theme
 
 The goal is a comfortable, readable workspace for long GTM sessions. The default
-is charcoal and slate, with distinct surface levels and restrained accents.
+is warm charcoal and grays inspired by GTM Sage, with distinct surface levels and restrained accents.
 
 | Role | Color |
 | --- | --- |
-| Page | `#202631` |
-| Cards | `#283240` |
-| Menus and dialogs | `#344153` |
-| Inputs and navigation | `#252e3b` |
-| Primary text | `#dce4ef` |
-| Secondary text | `#abb8c9` |
-| Control boundary | `#8796aa` |
-| Focus indicator | `#93c5fd` |
+| Page | `#262422` |
+| Cards | `#2d2b28` |
+| Menus and dialogs | `#33302e` |
+| Inputs and navigation | `#242220` |
+| Primary text | `#e3e0de` |
+| Secondary text | `#b8b2ac` |
+| Control boundary | `#938d85` |
+| Focus indicator | `#d6b77c` |
+
+| Decorative dividers | `#625d57` |
 
 ## Principles applied
 
@@ -32,6 +34,10 @@ text against all four surfaces, plus control boundaries and focus indicators.
 These tests do not establish WCAG compliance for every page: transformed site
 colors, translucent layers, custom components and native assets still require
 live visual and keyboard verification.
+
+The base background (`#262422`) and raised sidebar (`#33302e`) are grounded in
+GTM Sage's rendered theme. Decorative separators are deliberately brighter than
+Sage's subtle borders to improve separation in dense CRM and profile screens.
 
 ## References
 

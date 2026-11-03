@@ -14,7 +14,7 @@ An independent community project. Not affiliated with or endorsed by HubSpot.
 
 ## Install
 
-[Download the extension ZIP](https://github.com/pedropizarrojr/hubspot-dark-mode/raw/refs/heads/main/downloads/money-never-sleeps-0.2.1.zip)
+[Download the extension ZIP](https://github.com/pedropizarrojr/hubspot-dark-mode/raw/refs/heads/main/downloads/money-never-sleeps-0.3.0.zip)
 and unzip it. In Chrome, open
 `chrome://extensions`, enable **Developer mode**, click **Load unpacked**, and
 select the folder containing `manifest.json`. Refresh existing HubSpot and LinkedIn tabs once.
@@ -53,7 +53,8 @@ do not generate DOM mutations. Unchanged stylesheet transformations are cached.
 All overrides are screen-only so printing uses the original page styles.
 
 The manifest lists only HubSpot app hosts and LinkedIn. Additional regional hosts can be added
-explicitly as needed. Embedded third-party tools on other origins are outside
+explicitly as needed. Open shadow-root messaging widgets receive their own stylesheets and observers.
+Embedded third-party tools on other origins are outside
 the extension's access.
 
 ## LinkedIn support
@@ -63,7 +64,7 @@ feed uses generated classes and cross-origin CSS, so a separate adapter reads
 computed colors and applies scoped overrides in batches of up to 250 elements
 per animation frame. It handles newly inserted feed cards, navigation and
 messaging surfaces without relying on generated class names or reading content.
-Existing dark surfaces remain dark. Switching to Light removes the extension's
+Neutral surfaces use a consistent warm-gray palette. Switching to Light removes the extension's
 overrides; LinkedIn's own saved appearance preference still applies.
 
 LinkedIn also has a [native system appearance setting](https://www.linkedin.com/help/linkedin/answer/a524473/switch-between-dark-and-light-mode).
@@ -71,9 +72,16 @@ This extension provides a shared control for LinkedIn and HubSpot.
 
 ## Dark theme design
 
-The default uses charcoal and slate, lighter raised surfaces, off-white text and
+The default uses warm charcoal and layered grays, lighter raised surfaces, off-white text and
 visible focus indicators. Curated text and control colors have automated contrast
 checks. See [DESIGN.md](DESIGN.md) for the palette, rationale and primary references.
+
+## Version 0.3.0
+
+- Matched the warm-gray direction of GTM Sage.
+- Fixed LinkedIn messaging in open shadow roots, including late-loaded chats.
+- Strengthened separators, card outlines and profile-photo boundaries.
+- Added the laser-eye headshot icon.
 
 ## Version 0.2.1
 
@@ -100,7 +108,7 @@ npm run check
 npm run package
 ```
 
-The ZIP is written to `dist/money-never-sleeps-0.2.1.zip`, with `manifest.json` at
+The ZIP is written to `dist/money-never-sleeps-0.3.0.zip`, with `manifest.json` at
 its root. Packaging uses fixed timestamps for reproducible output.
 
 For a synthetic browser fixture, run `npm run preview` locally and visit

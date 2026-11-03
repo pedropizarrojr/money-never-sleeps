@@ -24,9 +24,9 @@ Replace the extension files with the newer version, click its reload button on
 `chrome://extensions`, then refresh HubSpot and LinkedIn. To uninstall, click **Remove** on that
 page. Keep the folder in place while the unpacked extension is installed.
 
-## Upgrading from 0.1.0
+## Upgrading from an earlier version
 
-Replace the contents of the same installed folder with the unzipped 0.2.1 files,
+Replace the contents of the same installed folder with the unzipped 0.3.0 files,
 then reload the extension in `chrome://extensions`. Your saved appearance setting
 is preserved when the installed folder stays the same. Chrome may ask you to
 approve the newly added LinkedIn site access. Refresh both sites after updating.

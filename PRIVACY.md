@@ -5,7 +5,8 @@ loads no remote code, and includes no analytics or tracking.
 
 The extension inspects CSS rules, computed HubSpot theme variables, and inline
 style declarations to generate a dark stylesheet. On LinkedIn it also reads computed element colors because the site uses generated
-classes and cross-origin CSS. It observes changes to styles
+classes and cross-origin CSS. Open shadow roots used by LinkedIn messaging are
+themed locally using separate stylesheets and observers; message contents are not read. It observes changes to styles
 and stylesheet nodes so newly loaded components can be themed. It does not read
 record text, field values, email contents, cookies, authentication tokens, or
 browser history. It does not create, edit, or delete CRM records.
