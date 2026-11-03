@@ -1,6 +1,6 @@
 # Contributing
 
-Keep the extension focused on HubSpot and LinkedIn appearance. Avoid new permissions and
+Keep the extension focused on HubSpot, LinkedIn, Drive, Docs, Sheets and Calendar appearance. Avoid new permissions and
 dependencies unless a concrete compatibility issue requires them. Do not add
 tracking, remote scripts, credentials, customer data, or real CRM fixtures.
 
@@ -8,7 +8,7 @@ Run `npm test`, `npm run check`, and `npm run package` before opening a pull req
 
 ## Manual verification
 
-1. Load `extension/` unpacked in Chrome and refresh both sites once.
+1. Load `extension/` unpacked in Chrome and refresh supported apps once.
 2. Select System, switch the OS from light to dark and back, and confirm that
    already-open supported tabs change without a reload.
 3. Select Dark and Light manually. Confirm that OS changes don't override them.
@@ -23,6 +23,14 @@ Run `npm test`, `npm run check`, and `npm run package` before opening a pull req
 9. Check status badges, charts, media, email previews and printed output.
 10. Confirm that toggling Light restores the original styling, and that the
    extension makes no network requests.
+11. Check Drive Home, My Drive, grid/list layouts, search and menus; Calendar week,
+    month, event popovers and settings. Calendar event colors should keep their identity.
+12. Check Docs and Sheets menus, toolbars, tabs, side panels and formula editing.
+    Toggle **Dark document pages** in both modes, verify chart/image colors in
+    original-color mode, then check print preview uses original formatting.
+13. Compare loading and scrolling with the extension enabled and disabled. Do not
+    infer browser latency from the unit-test runtime. Google must not start a
+    scanning engine, periodic timer or per-scroll JavaScript handler.
 
 When filing an issue, include Chrome and extension versions, the HubSpot tool,
 steps to reproduce, and a redacted screenshot if useful. Never include private

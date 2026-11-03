@@ -4,7 +4,7 @@
 2. Open `chrome://extensions` in Chrome.
 3. Turn on **Developer mode** in the upper right.
 4. Click **Load unpacked** and select the unzipped folder containing `manifest.json`.
-5. Refresh any HubSpot and LinkedIn tabs that were already open when you installed it.
+5. Refresh any HubSpot, LinkedIn, Drive, Docs, Sheets and Calendar tabs that were already open when you installed it.
 6. Pin **Money Never Sleeps** from Chrome's Extensions menu if you want quick access.
 
 **System** is selected by default. Once loaded, an open supported tab follows changes
@@ -12,7 +12,7 @@ to Chrome's reported system color preference, including scheduled appearance
 changes. No refresh is needed when your system changes appearance.
 
 Choose **Dark** or **Light** in the extension popup to override automatic switching.
-Choose **System** again to resume it. Preferences apply to all open HubSpot and LinkedIn tabs in
+Choose **System** again to resume it. Preferences apply to all open supported tabs in
 the same Chrome profile and stay on this device.
 
 If you downloaded the full source repository instead of the extension ZIP, select
@@ -21,17 +21,29 @@ the repository's `extension` folder when clicking **Load unpacked**.
 ## Update or remove
 
 Replace the extension files with the newer version, click its reload button on
-`chrome://extensions`, then refresh HubSpot and LinkedIn. To uninstall, click **Remove** on that
+`chrome://extensions`, then refresh supported apps. To uninstall, click **Remove** on that
 page. Keep the folder in place while the unpacked extension is installed.
 
 ## Upgrading from an earlier version
 
-Replace the contents of the same installed folder with the unzipped 0.3.4 files,
+Replace the contents of the same installed folder with the unzipped 0.4.0 files,
 then reload the extension in `chrome://extensions`. Your saved appearance setting
 is preserved when the installed folder stays the same. Chrome may ask you to
-approve the newly added LinkedIn site access. Refresh both sites after updating.
+approve the added Google Drive, Docs/Sheets and Calendar site access. Approve
+that access for Google support, then refresh those tabs once after updating.
 
 The extension now appears as **Money Never Sleeps** in Chrome.
+
+## Google document colors
+
+**Dark document pages** is on by default. It darkens Docs page canvases and Sheets
+grids for reading without changing the saved file. Images, charts and colored
+cells in those canvases can look different. Turn this setting off to view their
+original colors while keeping menus and toolbars dark. If a very large sheet
+scrolls slowly, turning it off also removes the grid's visual filter.
+
+Gmail, Slides, Forms, Meet, embedded external viewers and Google sign-in pages
+are outside this release's coverage.
 
 ## Troubleshooting
 

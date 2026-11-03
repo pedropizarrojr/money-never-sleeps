@@ -1,23 +1,26 @@
 # Money Never Sleeps
 
-A small, open-source Chrome extension for working in HubSpot and LinkedIn after hours.
+A small, open-source Chrome extension for working in HubSpot, LinkedIn, Google Drive,
+Google Docs, Google Sheets and Google Calendar after hours.
 It follows your system appearance in real time, with manual Dark and Light overrides.
 
-- **System by default:** already-open HubSpot and LinkedIn tabs switch when your device changes appearance.
+- **System by default:** already-open supported tabs switch when your device changes appearance.
 - **One preference across tabs:** changes in the popup apply throughout the current profile.
 - **Dynamic theming:** adapts HubSpot design tokens and styles, plus LinkedIn feed, profile and messaging surfaces.
-- **No page inversion:** recolors CSS instead of filtering the whole page. Image files and artwork stay intact; navigation icons inherit readable text colors.
+- **Warm gray across apps:** Google uses static CSS, with no page scans, polling or scroll handlers.
+- **Document controls:** optional filters darken Docs pages and Sheets grids without editing file contents. Turn off **Dark document pages** when checking original image, chart or cell colors.
+- **Media stays intact outside the editor canvas:** HubSpot, LinkedIn and Drive images are not inverted. Navigation icons inherit readable text colors.
 - **Local only:** no network requests, tracking, remote code, account connection or backend.
 - **MIT licensed:** use it, improve it, and share it.
 
-An independent community project. Not affiliated with or endorsed by HubSpot.
+An independent community project. Not affiliated with or endorsed by HubSpot, LinkedIn or Google.
 
 ## Install
 
-[Download the extension ZIP](https://github.com/pedropizarrojr/money-never-sleeps/raw/refs/heads/main/downloads/money-never-sleeps-0.3.4.zip)
+[Download the extension ZIP](https://github.com/pedropizarrojr/money-never-sleeps/raw/refs/heads/main/downloads/money-never-sleeps-0.4.0.zip)
 and unzip it. In Chrome, open
 `chrome://extensions`, enable **Developer mode**, click **Load unpacked**, and
-select the folder containing `manifest.json`. Refresh existing HubSpot and LinkedIn tabs once.
+select the folder containing `manifest.json`. Refresh existing supported tabs once.
 
 If installing from the source repository, load the **`extension`** folder.
 There is no build step or dependency installation required.
@@ -30,7 +33,7 @@ See [INSTALL.md](INSTALL.md) for updates and troubleshooting, and
 | Mode | Behavior |
 | --- | --- |
 | System | Tracks Chrome's reported system preference, including automatic changes |
-| Dark | Keeps the extension's dark theme enabled on both sites |
+| Dark | Keeps the extension's dark theme enabled on supported apps |
 | Light | Removes the extension's dark theme and restores each site's original appearance |
 
 The extension listens to `matchMedia('(prefers-color-scheme: dark)')` change
@@ -54,7 +57,8 @@ with at least 100 ms between refreshes. Image loads and unchanged inline colors
 do not trigger refreshes. Unchanged stylesheet transformations are cached.
 All overrides are screen-only so printing uses the original page styles.
 
-The manifest lists only HubSpot app hosts and LinkedIn. LinkedIn-origin fallback
+The manifest lists HubSpot app hosts, LinkedIn, Drive, Calendar, and the Docs/Sheets
+paths on docs.google.com. It does not request all-google.com access. LinkedIn-origin fallback
 also covers related about:blank, blob and data frames created by LinkedIn, such as
 embedded ad panels. In dark mode, the iframe element also receives `color-scheme: dark`,
 so Chrome reports the correct appearance to the frame's System mode listener.
@@ -63,9 +67,36 @@ explicitly as needed. Open shadow-root messaging widgets receive their own style
 Embedded third-party tools on other origins are outside
 the extension's access.
 
+## Google Workspace support
+
+Drive, Docs, Sheets and Calendar share the extension's System/Dark/Light preference.
+Google gets a dedicated static stylesheet and the small appearance controller,
+without loading either HubSpot's or LinkedIn's scanning engine. CSS covers new
+components as they appear. No stylesheet observers, polling, color reads or
+scroll handlers run on Google. A one-time bootstrap observer is used only if
+Chrome starts the content script before the HTML root exists.
+
+Drive and Calendar use Google's Material color variables with warm gray overrides,
+including RGB variants for hover/alpha styles. Docs and Sheets also receive
+targeted toolbar, menu, dialog, sidebar, formula-bar and tab styles.
+
+Docs and Sheets paint their content into canvases. **Dark document pages** is on
+by default and applies a filter only to Docs page tiles and Sheets grids. Text,
+images, chart colors and colored cells inside those canvases can look different.
+Uncheck it to preserve the source colors while retaining dark toolbars. The
+extension never changes a document's page color, formatting, cell values or
+saved contents, and its rules are screen-only. Filters add browser compositing
+work; real load/scroll overhead has not yet been measured. There is no verified
+100–200 ms latency claim.
+
+Drive and Calendar also offer native dark modes. This extension adds the shared
+warm gray treatment without changing those account settings. Gmail, Slides,
+Forms, Meet, embedded third-party viewers and Google sign-in pages are outside
+this release's coverage. See [Google browser QA and limits](docs/google-qa-0.4.0.md).
+
 ## LinkedIn support
 
-The same System, Dark and Light setting controls both sites. CSS supplies the
+The shared System, Dark and Light setting controls LinkedIn. CSS supplies the
 baseline for common surfaces, text, controls, ads and messaging. A bounded adapter
 can enhance newly inserted elements once. It reads colors in a batch, then assigns
 shared style rules, without disabling the theme or rebuilding the whole stylesheet.
@@ -89,6 +120,14 @@ This extension provides a shared control for LinkedIn and HubSpot.
 The default uses warm charcoal and layered grays, lighter raised surfaces, off-white text and
 visible focus indicators. Curated text and control colors have automated contrast
 checks. See [DESIGN.md](DESIGN.md) for the palette, rationale and primary references.
+
+## Version 0.4.0
+
+- Added Drive, Docs, Sheets and Calendar to the same plugin and appearance control.
+- Used static CSS and explicit Google site access without a scanning engine.
+- Added a persistent switch for dark document canvases versus original source colors.
+- Refined Docs menu-label contrast and avoided double inversion of Sheets cell editors.
+- Added Google appearance, migration/race and contrast regression checks.
 
 ## Version 0.3.4
 
