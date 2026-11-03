@@ -14,7 +14,7 @@ An independent community project. Not affiliated with or endorsed by HubSpot.
 
 ## Install
 
-[Download the extension ZIP](https://github.com/pedropizarrojr/money-never-sleeps/raw/refs/heads/main/downloads/money-never-sleeps-0.3.0.zip)
+[Download the extension ZIP](https://github.com/pedropizarrojr/money-never-sleeps/raw/refs/heads/main/downloads/money-never-sleeps-0.3.1.zip)
 and unzip it. In Chrome, open
 `chrome://extensions`, enable **Developer mode**, click **Load unpacked**, and
 select the folder containing `manifest.json`. Refresh existing HubSpot and LinkedIn tabs once.
@@ -48,11 +48,13 @@ cross-origin stylesheets that CSSOM cannot expose directly. Original stylesheets
 and style attributes remain intact; Light mode removes the generated sheet.
 
 A stylesheet observer handles newly loaded styles. While dark mode is active in
-a visible page, a 1.5-second check detects CSS-in-JS `insertRule()` additions that
+a visible page, a lightweight 250 ms rule-count check detects CSS-in-JS `insertRule()` additions that
 do not generate DOM mutations. Unchanged stylesheet transformations are cached.
 All overrides are screen-only so printing uses the original page styles.
 
-The manifest lists only HubSpot app hosts and LinkedIn. Additional regional hosts can be added
+The manifest lists only HubSpot app hosts and LinkedIn. LinkedIn-origin fallback
+also covers related about:blank, blob and data frames created by LinkedIn, such as
+embedded ad panels. Additional regional hosts can be added
 explicitly as needed. Open shadow-root messaging widgets receive their own stylesheets and observers.
 Embedded third-party tools on other origins are outside
 the extension's access.
@@ -62,7 +64,7 @@ the extension's access.
 The same System, Dark and Light setting controls both sites. LinkedIn's current
 feed uses generated classes and cross-origin CSS, so a separate adapter reads
 computed colors and applies scoped overrides in batches of up to 250 elements
-per animation frame. It handles newly inserted feed cards, navigation and
+in the current microtask, with larger backlogs spread over animation frames. It handles newly inserted feed cards, navigation and
 messaging surfaces without relying on generated class names or reading content.
 Neutral surfaces use a consistent warm-gray palette. Switching to Light removes the extension's
 overrides; LinkedIn's own saved appearance preference still applies.
@@ -75,6 +77,15 @@ This extension provides a shared control for LinkedIn and HubSpot.
 The default uses warm charcoal and layered grays, lighter raised surfaces, off-white text and
 visible focus indicators. Curated text and control colors have automated contrast
 checks. See [DESIGN.md](DESIGN.md) for the palette, rationale and primary references.
+
+## Version 0.3.1
+
+- Added early HubSpot table styling to prevent white loading rows.
+- Moved the first LinkedIn styling batch into the current pre-paint microtask.
+- Deduplicated nested DOM scans and prioritized newly inserted content.
+- Replaced unconditional stylesheet refreshes with lightweight rule-count checks.
+- Styled LinkedIn-created blank/blob ad frames without requesting unrelated hosts.
+- Made messaging header controls and close icons explicitly white.
 
 ## Version 0.3.0
 
@@ -99,7 +110,7 @@ checks. See [DESIGN.md](DESIGN.md) for the palette, rationale and primary refere
 
 ## Development
 
-Requires Node.js 20+ for checks and Python 3 for packaging. There are no runtime
+Requires Chrome 119+, Node.js 20+ for checks and Python 3 for packaging. There are no runtime
 or development package dependencies.
 
 ```sh
@@ -108,7 +119,7 @@ npm run check
 npm run package
 ```
 
-The ZIP is written to `dist/money-never-sleeps-0.3.0.zip`, with `manifest.json` at
+The ZIP is written to `dist/money-never-sleeps-0.3.1.zip`, with `manifest.json` at
 its root. Packaging uses fixed timestamps for reproducible output.
 
 For a synthetic browser fixture, run `npm run preview` locally and visit
@@ -122,7 +133,7 @@ cards, tables, form controls, menus and dialogs. HubSpot tools and accounts can
 use different design-system versions. This is an initial release, not a claim
 that every HubSpot screen has been verified.
 
-- CSS-in-JS rules inserted into an existing sheet can take up to 1.5 seconds to adapt.
+- CSS-in-JS rules inserted into an existing sheet can take up to 250 ms to adapt; common HubSpot tables have static early styling.
 - Inaccessible external CSS uses shared token overrides and component fallbacks.
 - Inline declarations marked `!important`, closed shadow roots, pseudo-elements,
   canvas charts and third-party frames may need additional handling.
@@ -135,6 +146,8 @@ that every HubSpot screen has been verified.
 See [CONTRIBUTING.md](CONTRIBUTING.md) for a manual verification checklist.
 
 LinkedIn coverage still needs live visual verification across all account layouts.
+Early CSS and pre-paint scheduling reduce light flashes; browser navigation
+backgrounds, inaccessible external frames and image pixels can still be light.
 
 ## License
 

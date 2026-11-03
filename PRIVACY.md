@@ -20,7 +20,7 @@ current device. It is not synced through the extension or sent to a server.
 - **storage:** saves your appearance preference and updates open tabs when it changes.
 - **Content script site access:** allows JavaScript and CSS to run only on the
   explicitly listed HubSpot app hosts and LinkedIn hosts in `extension/manifest.json`, including
-  matching embedded frames. Chrome may describe this as permission to read and
+  matching embedded frames and related blank/blob/data frames created by LinkedIn. Chrome may describe this as permission to read and
   change data on those hosts because modifying page appearance requires access
   to the page. No access to unrelated websites is requested.
 
