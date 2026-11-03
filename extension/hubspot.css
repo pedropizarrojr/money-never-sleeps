@@ -1,6 +1,24 @@
 /* SPDX-License-Identifier: MIT
    Keep the entire navigation rail on one surface, including empty space. */
 @media screen {
+  /* Static document_start coverage prevents unthemed table rows from painting
+     white while HubSpot adds data or inserts new CSS-in-JS rules. */
+  html[data-hsdm-theme="dark"] :is(table,[role="table"],[role="grid"]) :is(tbody,tr,td,[role="rowgroup"],[role="row"],[role="cell"],[role="gridcell"]) {
+    background-color: #2d2b28 !important;
+    color: #e3e0de !important;
+    border-color: #625d57 !important;
+  }
+  html[data-hsdm-theme="dark"] :is(thead,th,[role="columnheader"]) {
+    background-color: #33302e !important;
+    color: #e3e0de !important;
+    border-color: #625d57 !important;
+  }
+  html[data-hsdm-theme="dark"] :is(table,[role="table"],[role="grid"]) :is(tr:hover>td,[role="row"]:hover>[role="cell"],[role="row"]:hover>[role="gridcell"]) {
+    background-color: #383530 !important;
+  }
+  html[data-hsdm-theme="dark"] :is(table,[role="table"],[role="grid"]) :is(tr[aria-selected="true"]>td,[role="row"][aria-selected="true"]>[role="cell"],[role="row"][aria-selected="true"]>[role="gridcell"]) {
+    background-color: #46423d !important;
+  }
   html[data-hsdm-theme="dark"] #hs-vertical-nav {
     background-color: #33302e !important;
     color: #e3e0de !important;

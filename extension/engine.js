@@ -3,10 +3,21 @@
   "use strict";
   const { transformValue } = scope.HSDMPalette;
   const selector = 'html[data-hsdm-theme="dark"]';
-  let style = null, observer = null, timer = null, pending = null, active = false;
+  let style = null, observer = null, timer = null, pending = false, active = false, epoch = 0;
+  let lastSheetState = [];
   let inlineId = 0;
   let tokenCss = "", tokensDirty = true;
   const cache = new WeakMap();
+
+  function sheetState() {
+    const result = [];
+    for (const sheet of document.styleSheets) {
+      if (sheet.ownerNode === style || sheet.ownerNode?.dataset?.hsdmOwned === "true" || sheet.href?.startsWith("chrome-extension://")) continue;
+      try { result.push([sheet, sheet.cssRules.length, sheet.disabled]); }
+      catch { result.push([sheet, -1, sheet.disabled]); }
+    }
+    return result;
+  }
 
   function declarations(source) {
     const out = [];
@@ -42,7 +53,7 @@
   }
 
   function refresh() {
-    pending = null;
+    pending = false;
     if (!active || !document.documentElement) return;
     if (!style || !style.isConnected) {
       style = document.createElement("style");
@@ -97,11 +108,18 @@
     }
     css = `@media screen {${css}}`;
     if (style.textContent !== css) style.textContent = css;
+    lastSheetState = sheetState();
   }
 
   function schedule(event) {
     if (event?.type === "load") tokensDirty = true;
-    if (active && pending === null) pending = setTimeout(refresh, 80);
+    if (active && !pending) {
+      pending = true;
+      const scheduledEpoch = epoch;
+      queueMicrotask(() => {
+        if (scheduledEpoch === epoch) refresh();
+      });
+    }
   }
 
   function start() {
@@ -121,17 +139,21 @@
     });
     observer.observe(document.documentElement, { subtree: true, childList: true, characterData: true, attributes: true, attributeFilter: ["style", "media", "disabled", "class"] });
     document.addEventListener("load", schedule, true);
-    timer = setInterval(() => { if (!document.hidden) schedule(); }, 1500);
+    timer = setInterval(() => {
+      if (document.hidden) return;
+      const next = sheetState();
+      if (next.length !== lastSheetState.length || next.some((entry, i) => entry.some((value, j) => value !== lastSheetState[i]?.[j]))) schedule();
+    }, 250);
     refresh();
   }
 
   function stop() {
     active = false;
+    epoch++;
     observer?.disconnect();
     document.removeEventListener("load", schedule, true);
     clearInterval(timer);
-    clearTimeout(pending);
-    pending = null;
+    pending = false;
     style?.remove();
     style = null;
     document.querySelectorAll("[data-hsdm-inline]").forEach((element) => element.removeAttribute("data-hsdm-inline"));

@@ -5,14 +5,28 @@
   const prefix = 'html[data-hsdm-theme="dark"]';
   const skip = 'script,style,link,meta,head,img,picture,video,audio,canvas,source,track,svg,svg *,video *,[data-hsdm-preserve]';
   const properties = ["color", "background-color", "background-image", "border-top-color", "border-right-color", "border-bottom-color", "border-left-color", "box-shadow"];
-  let active = false, frame = null, timer = null, serial = 0;
+  let active = false, frame = null, timer = null, serial = 0, microtaskQueued = false, epoch = 0;
   let queue = [], offset = 0;
   const dirty = new Set(), records = new Map(), contexts = new Map();
 
   function enqueue(root) {
     if (!active || !root || ![1, 11].includes(root.nodeType) || root.closest?.(skip)) return;
+    for (let parent = root.parentNode; parent; parent = parent.parentNode) {
+      if (dirty.has(parent)) return;
+    }
     dirty.add(root);
-    if (frame === null) frame = requestAnimationFrame(flush);
+    // MutationObserver callbacks and microtasks run before paint. Style the
+    // first batch in that turn instead of waiting for another animation frame.
+    if (!microtaskQueued) {
+      microtaskQueued = true;
+      if (frame !== null) { cancelAnimationFrame(frame); frame = null; }
+      const scheduledEpoch = epoch;
+      queueMicrotask(() => {
+        if (scheduledEpoch !== epoch) return;
+        microtaskQueued = false;
+        flush();
+      });
+    }
   }
 
   function register(root) {
@@ -27,7 +41,7 @@
         if (change.type === "attributes") enqueue(target);
         else if (change.type === "childList") {
           change.addedNodes.forEach((node) => { if (node.nodeType === 1) enqueue(node); });
-          if (change.removedNodes.length && frame === null) frame = requestAnimationFrame(flush);
+          if (change.removedNodes.length && !change.addedNodes.length) enqueue(context.shadow ? root : document.documentElement);
         }
       }
     });
@@ -75,18 +89,34 @@ ${p} :is(button,a) svg[fill=currentColor]{color:inherit !important;fill:currentC
 ${p} :focus-visible{outline:2px solid ${THEME.focus} !important;outline-offset:2px;}
 ${p} ::placeholder{color:${THEME.muted} !important;opacity:1;}
 ${p} ::selection{background:#62533b;color:${THEME.text};}
+${controlCss(p)}
 `;
+  }
+
+  function controlCss(p) {
+    // LinkedIn's header symbols often use <svg><use> without a fill attribute.
+    // They must be targeted by purpose, rather than svg[fill=currentColor].
+    const buttons = `${p} :is(.msg-overlay-bubble-header__controls button,.msg-overlay-conversation-bubble-header button,button[class*="msg-overlay-bubble-header__control"])`;
+    return `${buttons}{color:#fff !important;}
+${buttons} :is(svg,li-icon){color:#fff !important;fill:#fff !important;}
+${buttons} svg :is(use,path){fill:inherit !important;}
+${buttons} svg [stroke]:not([stroke="none"]){stroke:#fff !important;}`;
   }
 
   function flush() {
     frame = null;
     if (!active) return;
     if (dirty.size) {
-      const candidates = new Set(queue.slice(offset));
+      const candidates = new Set();
       // Open shadow trees need their own stylesheet and observer. LinkedIn's
       // interop messaging widgets are outside the main document's CSS scope.
       for (const root of dirty) {
         if (!root.isConnected) continue;
+        let covered = false;
+        for (let parent = root.parentNode; parent; parent = parent.parentNode) {
+          if (dirty.has(parent)) { covered = true; break; }
+        }
+        if (covered) continue;
         const nodes = [...root.querySelectorAll("*")];
         if (root.nodeType === 1) nodes.unshift(root);
         for (const node of nodes) {
@@ -97,6 +127,8 @@ ${p} ::selection{background:#62533b;color:${THEME.text};}
           }
         }
       }
+      // Fresh UI goes first; older offscreen work can finish in later frames.
+      for (const node of queue.slice(offset)) candidates.add(node);
       dirty.clear();
       queue = [...candidates].filter((node) => !node.closest(skip));
       offset = 0;
@@ -135,7 +167,7 @@ ${p} ::selection{background:#62533b;color:${THEME.text};}
       if (context.shadow && !root.host.isConnected) {
         context.observer.disconnect(); context.style.remove(); contexts.delete(root); continue;
       }
-      const text = `@media screen{${cssByRoot.get(root) || ""}${context.shadow ? chatCss() : ""}}`;
+      const text = `@media screen{${cssByRoot.get(root) || ""}${context.shadow ? chatCss() : controlCss(prefix)}}`;
       if (context.style.textContent !== text) context.style.textContent = text;
     }
     if (offset < queue.length || dirty.size) {
@@ -164,6 +196,8 @@ ${p} ::selection{background:#62533b;color:${THEME.text};}
 
   function stop() {
     active = false;
+    epoch++;
+    microtaskQueued = false;
     document.removeEventListener("load", onLoad, true);
     clearInterval(timer);
     for (const context of contexts.values()) { context.observer.disconnect(); context.style?.remove(); }

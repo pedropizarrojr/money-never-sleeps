@@ -1,9 +1,9 @@
 {
   "manifest_version": 3,
   "name": "Money Never Sleeps",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "description": "Dark mode for your GTM stack. HubSpot and LinkedIn, synced with your system appearance.",
-  "minimum_chrome_version": "111",
+  "minimum_chrome_version": "119",
   "permissions": [
     "storage"
   ],
@@ -59,7 +59,8 @@
       ],
       "run_at": "document_start",
       "all_frames": true,
-      "world": "ISOLATED"
+      "world": "ISOLATED",
+      "match_origin_as_fallback": true
     }
   ],
   "content_security_policy": {
