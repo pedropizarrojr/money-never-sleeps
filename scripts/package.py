@@ -5,7 +5,7 @@ from pathlib import Path
 
 root = Path(__file__).resolve().parents[1]
 version = json.loads((root / 'extension/manifest.json').read_text())['version']
-out = root / 'dist' / f'hubspot-dark-mode-{version}.zip'
+out = root / 'dist' / f'money-never-sleeps-{version}.zip'
 out.parent.mkdir(exist_ok=True)
 with zipfile.ZipFile(out, 'w', compression=zipfile.ZIP_DEFLATED) as archive:
     for file in sorted((root / 'extension').rglob('*')):
