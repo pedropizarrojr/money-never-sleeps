@@ -1,4 +1,4 @@
-# GTM Dark Mode
+# Money Never Sleeps
 
 A small, open-source Chrome extension for working in HubSpot and LinkedIn after hours.
 It follows your system appearance in real time, with manual Dark and Light overrides.
@@ -14,7 +14,7 @@ An independent community project. Not affiliated with or endorsed by HubSpot.
 
 ## Install
 
-[Download the extension ZIP](https://github.com/pedropizarrojr/hubspot-dark-mode/raw/refs/heads/main/downloads/hubspot-dark-mode-0.2.0.zip)
+[Download the extension ZIP](https://github.com/pedropizarrojr/hubspot-dark-mode/raw/refs/heads/main/downloads/money-never-sleeps-0.2.1.zip)
 and unzip it. In Chrome, open
 `chrome://extensions`, enable **Developer mode**, click **Load unpacked**, and
 select the folder containing `manifest.json`. Refresh existing HubSpot and LinkedIn tabs once.
@@ -75,6 +75,11 @@ The default uses charcoal and slate, lighter raised surfaces, off-white text and
 visible focus indicators. Curated text and control colors have automated contrast
 checks. See [DESIGN.md](DESIGN.md) for the palette, rationale and primary references.
 
+## Version 0.2.1
+
+- Renamed the extension to **Money Never Sleeps**.
+- Dark mode for your GTM stack.
+
 ## Version 0.2.0
 
 - Added LinkedIn support under the same appearance control.
@@ -82,7 +87,7 @@ checks. See [DESIGN.md](DESIGN.md) for the palette, rationale and primary refere
 - Unified the full HubSpot sidebar background, including empty space.
 - Added explicit navigation hover and active states.
 - Darkened neutral gradient fades and bright shadows without recoloring image files.
-- Used the working name **GTM Dark Mode** pending a final project name.
+- Expanded the extension from a HubSpot tool into a GTM tool.
 
 ## Development
 
@@ -95,7 +100,7 @@ npm run check
 npm run package
 ```
 
-The ZIP is written to `dist/hubspot-dark-mode-0.2.0.zip`, with `manifest.json` at
+The ZIP is written to `dist/money-never-sleeps-0.2.1.zip`, with `manifest.json` at
 its root. Packaging uses fixed timestamps for reproducible output.
 
 For a synthetic browser fixture, run `npm run preview` locally and visit

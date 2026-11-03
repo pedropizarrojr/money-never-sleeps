@@ -1,6 +1,6 @@
 # Privacy
 
-GTM Dark Mode works locally in your browser. It makes no network requests,
+Money Never Sleeps works locally in your browser. It makes no network requests,
 loads no remote code, and includes no analytics or tracking.
 
 The extension inspects CSS rules, computed HubSpot theme variables, and inline

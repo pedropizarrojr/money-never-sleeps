@@ -1,11 +1,11 @@
-# Install GTM Dark Mode
+# Install Money Never Sleeps
 
 1. Download the extension ZIP from the repository, then unzip it to a permanent folder.
 2. Open `chrome://extensions` in Chrome.
 3. Turn on **Developer mode** in the upper right.
 4. Click **Load unpacked** and select the unzipped folder containing `manifest.json`.
 5. Refresh any HubSpot and LinkedIn tabs that were already open when you installed it.
-6. Pin **GTM Dark Mode** from Chrome's Extensions menu if you want quick access.
+6. Pin **Money Never Sleeps** from Chrome's Extensions menu if you want quick access.
 
 **System** is selected by default. Once loaded, an open supported tab follows changes
 to Chrome's reported system color preference, including scheduled appearance
@@ -26,12 +26,12 @@ page. Keep the folder in place while the unpacked extension is installed.
 
 ## Upgrading from 0.1.0
 
-Replace the contents of the same installed folder with the unzipped 0.2.0 files,
+Replace the contents of the same installed folder with the unzipped 0.2.1 files,
 then reload the extension in `chrome://extensions`. Your saved appearance setting
 is preserved when the installed folder stays the same. Chrome may ask you to
 approve the newly added LinkedIn site access. Refresh both sites after updating.
 
-The working extension name is now **GTM Dark Mode**. The final name is still open.
+The extension now appears as **Money Never Sleeps** in Chrome.
 
 ## Troubleshooting
 

@@ -1,6 +1,6 @@
 {
-  "name": "hubspot-dark-mode",
-  "version": "0.2.0",
+  "name": "money-never-sleeps",
+  "version": "0.2.1",
   "private": true,
   "description": "An open-source Chrome extension that follows your system appearance on HubSpot and LinkedIn.",
   "license": "MIT",
@@ -10,5 +10,7 @@
     "package": "python3 scripts/package.py",
     "preview": "python3 -m http.server 8765 --bind 127.0.0.1"
   },
-  "engines": {"node": ">=20"}
+  "engines": {
+    "node": ">=20"
+  }
 }
