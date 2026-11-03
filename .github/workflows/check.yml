@@ -15,6 +15,7 @@ jobs:
           python-version: '3.x'
       - run: npm test
       - run: npm run check
+      - run: npm run theme:build
       - run: npm run package
       - uses: actions/upload-artifact@v4
         with:

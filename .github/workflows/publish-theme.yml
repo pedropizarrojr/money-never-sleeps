@@ -1,0 +1,64 @@
+name: Publish automatic theme updates
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'extension/*.css'
+      - 'extension/manifest.json'
+      - 'extension/update-policy.js'
+      - 'scripts/build-theme.cjs'
+      - '.github/workflows/publish-theme.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: publish-theme
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    if: github.repository == 'pedropizarrojr/money-never-sleeps'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm test
+      - run: npm run check
+      - run: npm run theme:build
+      - uses: actions/upload-artifact@v4
+        with:
+          name: theme-update
+          path: dist/theme/latest.json
+      - name: Publish validated appearance data to the update channel
+        shell: bash
+        run: |
+          set -euo pipefail
+          latest_main=$(git ls-remote origin refs/heads/main | cut -f1)
+          if [ "$latest_main" != "$GITHUB_SHA" ]; then
+            echo "A newer main commit exists. Skipping this older theme."
+            exit 0
+          fi
+          theme_staging=$(mktemp -d)
+          cp dist/theme/latest.json "$theme_staging/latest.json"
+          if git ls-remote --exit-code origin refs/heads/theme-updates >/dev/null; then
+            git fetch origin theme-updates
+            git checkout --detach FETCH_HEAD
+          else
+            git checkout --orphan theme-updates
+            git rm -rf .
+          fi
+          mkdir -p updates
+          cp "$theme_staging/latest.json" updates/latest.json
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add updates/latest.json
+          git commit -m 'Publish validated theme update'
+          git push origin HEAD:refs/heads/theme-updates
