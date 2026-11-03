@@ -26,7 +26,7 @@ page. Keep the folder in place while the unpacked extension is installed.
 
 ## Upgrading from an earlier version
 
-Replace the contents of the same installed folder with the unzipped 0.3.1 files,
+Replace the contents of the same installed folder with the unzipped 0.3.2 files,
 then reload the extension in `chrome://extensions`. Your saved appearance setting
 is preserved when the installed folder stays the same. Chrome may ask you to
 approve the newly added LinkedIn site access. Refresh both sites after updating.

@@ -14,7 +14,7 @@ An independent community project. Not affiliated with or endorsed by HubSpot.
 
 ## Install
 
-[Download the extension ZIP](https://github.com/pedropizarrojr/money-never-sleeps/raw/refs/heads/main/downloads/money-never-sleeps-0.3.1.zip)
+[Download the extension ZIP](https://github.com/pedropizarrojr/money-never-sleeps/raw/refs/heads/main/downloads/money-never-sleeps-0.3.2.zip)
 and unzip it. In Chrome, open
 `chrome://extensions`, enable **Developer mode**, click **Load unpacked**, and
 select the folder containing `manifest.json`. Refresh existing HubSpot and LinkedIn tabs once.
@@ -54,7 +54,9 @@ All overrides are screen-only so printing uses the original page styles.
 
 The manifest lists only HubSpot app hosts and LinkedIn. LinkedIn-origin fallback
 also covers related about:blank, blob and data frames created by LinkedIn, such as
-embedded ad panels. Additional regional hosts can be added
+embedded ad panels. In dark mode, the iframe element also receives `color-scheme: dark`,
+so Chrome reports the correct appearance to the frame's System mode listener.
+Additional regional hosts can be added
 explicitly as needed. Open shadow-root messaging widgets receive their own stylesheets and observers.
 Embedded third-party tools on other origins are outside
 the extension's access.
@@ -77,6 +79,12 @@ This extension provides a shared control for LinkedIn and HubSpot.
 The default uses warm charcoal and layered grays, lighter raised surfaces, off-white text and
 visible focus indicators. Curated text and control colors have automated contrast
 checks. See [DESIGN.md](DESIGN.md) for the palette, rationale and primary references.
+
+## Version 0.3.2
+
+- Fixed LinkedIn ad frames detecting System mode as light while the page is dark.
+- Overrode LinkedIn's light iframe color scheme so frame media queries follow the dark parent.
+- Preserved ad images and logos, with no inversion or additional permissions.
 
 ## Version 0.3.1
 
@@ -119,7 +127,7 @@ npm run check
 npm run package
 ```
 
-The ZIP is written to `dist/money-never-sleeps-0.3.1.zip`, with `manifest.json` at
+The ZIP is written to `dist/money-never-sleeps-0.3.2.zip`, with `manifest.json` at
 its root. Packaging uses fixed timestamps for reproducible output.
 
 For a synthetic browser fixture, run `npm run preview` locally and visit
