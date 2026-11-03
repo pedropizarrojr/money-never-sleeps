@@ -1,12 +1,12 @@
-# HubSpot Dark Mode
+# GTM Dark Mode
 
-A small, open-source Chrome extension that makes HubSpot easier on the eyes.
+A small, open-source Chrome extension for working in HubSpot and LinkedIn after hours.
 It follows your system appearance in real time, with manual Dark and Light overrides.
 
-- **System by default:** already-open HubSpot tabs switch when your device changes appearance.
+- **System by default:** already-open HubSpot and LinkedIn tabs switch when your device changes appearance.
 - **One preference across tabs:** changes in the popup apply throughout the current profile.
-- **Dynamic theming:** adapts HubSpot design tokens, loaded stylesheets and inline colors.
-- **No page inversion:** recolors CSS instead of filtering the whole page. Image files and SVG fills are left alone.
+- **Dynamic theming:** adapts HubSpot design tokens and styles, plus LinkedIn feed, profile and messaging surfaces.
+- **No page inversion:** recolors CSS instead of filtering the whole page. Image files and artwork stay intact; navigation icons inherit readable text colors.
 - **Local only:** no network requests, tracking, remote code, account connection or backend.
 - **MIT licensed:** use it, improve it, and share it.
 
@@ -14,10 +14,10 @@ An independent community project. Not affiliated with or endorsed by HubSpot.
 
 ## Install
 
-[Download the extension ZIP](https://github.com/pedropizarrojr/hubspot-dark-mode/raw/refs/heads/main/downloads/hubspot-dark-mode-0.1.0.zip)
+[Download the extension ZIP](https://github.com/pedropizarrojr/hubspot-dark-mode/raw/refs/heads/main/downloads/hubspot-dark-mode-0.2.0.zip)
 and unzip it. In Chrome, open
 `chrome://extensions`, enable **Developer mode**, click **Load unpacked**, and
-select the folder containing `manifest.json`. Refresh existing HubSpot tabs once.
+select the folder containing `manifest.json`. Refresh existing HubSpot and LinkedIn tabs once.
 
 If installing from the source repository, load the **`extension`** folder.
 There is no build step or dependency installation required.
@@ -30,8 +30,8 @@ See [INSTALL.md](INSTALL.md) for updates and troubleshooting, and
 | Mode | Behavior |
 | --- | --- |
 | System | Tracks Chrome's reported system preference, including automatic changes |
-| Dark | Keeps the extension's dark theme enabled |
-| Light | Removes the extension's dark theme and restores HubSpot's original appearance |
+| Dark | Keeps the extension's dark theme enabled on both sites |
+| Light | Removes the extension's dark theme and restores each site's original appearance |
 
 The extension listens to `matchMedia('(prefers-color-scheme: dark)')` change
 events in each matched tab/frame. A local storage change listener propagates
@@ -52,9 +52,30 @@ a visible page, a 1.5-second check detects CSS-in-JS `insertRule()` additions th
 do not generate DOM mutations. Unchanged stylesheet transformations are cached.
 All overrides are screen-only so printing uses the original page styles.
 
-The manifest lists only HubSpot app hosts. Additional regional hosts can be added
+The manifest lists only HubSpot app hosts and LinkedIn. Additional regional hosts can be added
 explicitly as needed. Embedded third-party tools on other origins are outside
 the extension's access.
+
+## LinkedIn support
+
+The same System, Dark and Light setting controls both sites. LinkedIn's current
+feed uses generated classes and cross-origin CSS, so a separate adapter reads
+computed colors and applies scoped overrides in batches of up to 250 elements
+per animation frame. It handles newly inserted feed cards, navigation and
+messaging surfaces without relying on generated class names or reading content.
+Existing dark surfaces remain dark. Switching to Light removes the extension's
+overrides; LinkedIn's own saved appearance preference still applies.
+
+LinkedIn also has a [native system appearance setting](https://www.linkedin.com/help/linkedin/answer/a524473/switch-between-dark-and-light-mode).
+This extension provides a shared control for LinkedIn and HubSpot.
+
+## Version 0.2.0
+
+- Added LinkedIn support under the same appearance control.
+- Unified the full HubSpot sidebar background, including empty space.
+- Added explicit navigation hover and active states.
+- Darkened neutral gradient fades and bright shadows without recoloring image files.
+- Used the working name **GTM Dark Mode** pending a final project name.
 
 ## Development
 
@@ -67,7 +88,7 @@ npm run check
 npm run package
 ```
 
-The ZIP is written to `dist/hubspot-dark-mode-0.1.0.zip`, with `manifest.json` at
+The ZIP is written to `dist/hubspot-dark-mode-0.2.0.zip`, with `manifest.json` at
 its root. Packaging uses fixed timestamps for reproducible output.
 
 For a synthetic browser fixture, run `npm run preview` locally and visit
@@ -76,7 +97,7 @@ the fixture is never packaged with the extension.
 
 ## Initial release coverage and limits
 
-The engine targets shared HubSpot components, including CRM lists and records,
+The HubSpot engine targets shared components, including CRM lists and records,
 cards, tables, form controls, menus and dialogs. HubSpot tools and accounts can
 use different design-system versions. This is an initial release, not a claim
 that every HubSpot screen has been verified.
@@ -92,6 +113,8 @@ that every HubSpot screen has been verified.
 - A brief initial adjustment may occur while the saved manual setting loads.
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for a manual verification checklist.
+
+LinkedIn coverage still needs live visual verification across all account layouts.
 
 ## License
 
