@@ -5,7 +5,7 @@ const fs = require('node:fs');
 const palette = fs.readFileSync('extension/palette.js', 'utf8');
 const content = fs.readFileSync('extension/content.js', 'utf8');
 
-function harness({ systemDark = false, stored = 'system', delayed = false, host = 'app.hubspot.com', pathname = '/', engine = true, canvas = true } = {}) {
+function harness({ systemDark = false, stored = 'system', delayed = false, host = 'app.hubspot.com', pathname = '/', engine = true, canvas = true, updates } = {}) {
   const attributes = {}, listeners = {}, docListeners = {};
   const system = { matches: systemDark, addEventListener: (_, fn) => { listeners.system = fn; }, removeEventListener: () => { delete listeners.system; } };
   let resolve;
@@ -25,7 +25,8 @@ function harness({ systemDark = false, stored = 'system', delayed = false, host 
     window: { addEventListener(k,fn) { listeners[k] = fn; } },
     matchMedia: () => system,
     chrome: { storage: { onChanged: { addListener(fn) { listeners.storage = fn; } }, local: { get: () => initial } } },
-    HSDMEngine: engine ? { start() {h.starts++;}, stop() {h.stops++;}, refresh() {h.refreshes++;} } : undefined
+    HSDMEngine: engine ? { start() {h.starts++;}, stop() {h.stops++;}, refresh() {h.refreshes++;} } : undefined,
+    HSDMThemeUpdates: updates
   });
   vm.runInContext(palette, context);
   vm.runInContext(content, context);
@@ -130,4 +131,13 @@ test('System on a light OS performs no engine calls while idle or when tabs resu
   h.emitSystem(false); assert.equal(h.stops,1);
   for (let i=0; i<1000; i++) { h.resume(); h.pageShow(); }
   assert.deepEqual([h.starts,h.stops,h.refreshes], [1,1,0]);
+});
+
+test('the controller never activates the updater before saved preferences confirm dark mode', async () => {
+  let starts = 0;
+  const updates = { start() { starts++; }, stop() {}, resume() {} };
+  const h = harness({ systemDark: true, delayed: true, updates });
+  h.resume(); h.pageShow(); assert.equal(starts, 0);
+  h.finishInitial('light'); await flush(); assert.equal(starts, 0);
+  h.emitMode('dark'); assert.equal(starts, 1);
 });
