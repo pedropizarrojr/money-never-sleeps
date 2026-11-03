@@ -14,7 +14,7 @@ An independent community project. Not affiliated with or endorsed by HubSpot.
 
 ## Install
 
-[Download the extension ZIP](https://github.com/pedropizarrojr/money-never-sleeps/raw/refs/heads/main/downloads/money-never-sleeps-0.3.3.zip)
+[Download the extension ZIP](https://github.com/pedropizarrojr/money-never-sleeps/raw/refs/heads/main/downloads/money-never-sleeps-0.3.4.zip)
 and unzip it. In Chrome, open
 `chrome://extensions`, enable **Developer mode**, click **Load unpacked**, and
 select the folder containing `manifest.json`. Refresh existing HubSpot and LinkedIn tabs once.
@@ -49,7 +49,9 @@ and style attributes remain intact; Light mode removes the generated sheet.
 
 A stylesheet observer handles newly loaded styles. While dark mode is active in
 a visible page, a lightweight 250 ms rule-count check detects CSS-in-JS `insertRule()` additions that
-do not generate DOM mutations. Unchanged stylesheet transformations are cached.
+do not generate DOM mutations. HubSpot work is coalesced to animation frames,
+with at least 100 ms between refreshes. Image loads and unchanged inline colors
+do not trigger refreshes. Unchanged stylesheet transformations are cached.
 All overrides are screen-only so printing uses the original page styles.
 
 The manifest lists only HubSpot app hosts and LinkedIn. LinkedIn-origin fallback
@@ -63,14 +65,22 @@ the extension's access.
 
 ## LinkedIn support
 
-The same System, Dark and Light setting controls both sites. LinkedIn's current
-feed uses generated classes and cross-origin CSS, so a separate adapter reads
-computed colors and applies scoped overrides in batches of up to 250 elements
-in the current microtask, with larger backlogs spread over animation frames. It handles newly inserted feed cards, navigation and
-messaging surfaces without relying on generated class names or reading content.
-Neutral surfaces use a consistent warm-gray palette. Switching to Light removes the extension's
-overrides; LinkedIn's own saved appearance preference still applies.
+The same System, Dark and Light setting controls both sites. CSS supplies the
+baseline for common surfaces, text, controls, ads and messaging. A bounded adapter
+can enhance newly inserted elements once. It reads colors in a batch, then assigns
+shared style rules, without disabling the theme or rebuilding the whole stylesheet.
 
+LinkedIn enhancement uses lazy traversal, at most 40 visited elements per animation
+frame, a target 3 ms work slice and a 100 ms cumulative work budget per document.
+After the budget, CSS and the known chat-widget fallback remain active. There are
+no scroll, mouse-move or hover listeners, no stylesheet polling and no automatic
+page reloads. Class changes, removals and stylesheet churn do not restart scans.
+Manual Light removes the overrides; the site's own appearance preference still applies.
+
+These budgets bound the enhancement task, not end-to-end browser latency. A single
+browser style operation can exceed a slice, and browser CSS matching/painting costs
+are separate. Unusual late components may need explicit CSS coverage rather than
+unlimited recoloring. See [performance notes](docs/performance-0.3.4.md).
 LinkedIn also has a [native system appearance setting](https://www.linkedin.com/help/linkedin/answer/a524473/switch-between-dark-and-light-mode).
 This extension provides a shared control for LinkedIn and HubSpot.
 
@@ -79,6 +89,15 @@ This extension provides a shared control for LinkedIn and HubSpot.
 The default uses warm charcoal and layered grays, lighter raised surfaces, off-white text and
 visible focus indicators. Curated text and control colors have automated contrast
 checks. See [DESIGN.md](DESIGN.md) for the palette, rationale and primary references.
+
+## Version 0.3.4
+
+- Replaced LinkedIn's repeated document scans and per-element CSS rebuilding with bounded, incremental enhancement.
+- Grouped identical colors into shared rules and separated style reads from DOM writes.
+- Stopped rescanning for removals, hover/layout changes and stylesheet churn.
+- Added CSS-first fallbacks and retained automatic System/Dark/Light behavior.
+- Made HubSpot ignore image loads and layout-only updates; coalesced real work outside page microtasks.
+- Added performance regression tests and a reproducible operation benchmark.
 
 ## Version 0.3.3
 
@@ -137,7 +156,7 @@ npm run check
 npm run package
 ```
 
-The ZIP is written to `dist/money-never-sleeps-0.3.3.zip`, with `manifest.json` at
+The ZIP is written to `dist/money-never-sleeps-0.3.4.zip`, with `manifest.json` at
 its root. Packaging uses fixed timestamps for reproducible output.
 
 For a synthetic browser fixture, run `npm run preview` locally and visit

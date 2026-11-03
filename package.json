@@ -1,6 +1,6 @@
 {
   "name": "money-never-sleeps",
-  "version": "0.3.3",
+  "version": "0.3.4",
   "private": true,
   "description": "An open-source Chrome extension that follows your system appearance on HubSpot and LinkedIn.",
   "license": "MIT",
@@ -8,7 +8,8 @@
     "test": "node --test tests/*.test.cjs",
     "check": "node scripts/check.cjs",
     "package": "python3 scripts/package.py",
-    "preview": "python3 -m http.server 8765 --bind 127.0.0.1"
+    "preview": "python3 -m http.server 8765 --bind 127.0.0.1",
+    "benchmark": "node scripts/benchmark.cjs"
   },
   "engines": {
     "node": ">=20"
