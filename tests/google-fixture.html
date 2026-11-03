@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="en" data-hsdm-app="drive" data-hsdm-canvas="dark">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Money Never Sleeps | Synthetic Google component checks</title>
+<style>
+*{box-sizing:border-box}body{margin:0;font:14px/1.5 system-ui;background:#fff;color:#1f1f1f;
+--gm3-sys-color-surface:#fff;--gm3-sys-color-on-surface:#1f1f1f;--gm3-sys-color-outline-variant:#ddd;--gm3-sys-color-primary:#0b57d0}
+.qa-controls{padding:16px 24px;border-bottom:1px solid #938d85;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.qa-controls strong{margin-right:12px}button{font:inherit;padding:7px 12px;border:1px solid #938d85;border-radius:6px;cursor:pointer;background:transparent;color:inherit}button:hover{background:#938d8533}
+.qa-note{padding:0 24px;color:inherit}.workspace{margin:24px;border:1px solid #625d57;border-radius:12px;overflow:hidden}
+.workspace header,.workspace [role=toolbar],.workspace [role=menubar]{padding:14px 22px;display:flex;gap:16px;align-items:center}
+.workspace header{background:#f8fafd;color:#1f1f1f}.menu-button{color:#1f1f1f}.docs-toolbar{background:#f0f4f9;color:#1f1f1f}
+[role=main]{padding:22px;background:var(--gm3-sys-color-surface);color:var(--gm3-sys-color-on-surface)}
+[role=row]{display:grid;grid-template-columns:2fr 1fr 1fr}[role=gridcell],[role=columnheader]{padding:16px;border-bottom:1px solid var(--gm3-sys-color-outline-variant)}
+.kix-appview-editor{padding:24px;display:flex;justify-content:center}.kix-page-paginated{max-width:100%;background:#fff}.kix-canvas-tile-content{display:block;max-width:100%;height:auto}
+.grid-container{overflow:auto;background:#f8fafd}.grid-container canvas{display:block;max-width:100%;height:auto}.docs-sheet-tab{padding:12px 24px;background:#dde3ea;color:#1f1f1f;display:inline-block}
+.week{display:grid;grid-template-columns:repeat(5,1fr);min-height:300px}.day{border:1px solid var(--gm3-sys-color-outline-variant);padding:14px}.event{margin-top:20px;padding:12px;border-radius:6px;color:#fff}
+.goog-menu{position:fixed;z-index:5;right:40px;top:140px;width:260px;padding:18px;background:#fff;color:#222;border:1px solid #ddd;box-shadow:0 4px 24px #0003}.goog-menuitem{padding:10px}.goog-menuitem-content{color:#222}
+[hidden]{display:none!important}#checks{padding:0 24px 24px;white-space:pre-wrap}
+</style>
+<link rel="stylesheet" href="../extension/google.css">
+<script src="browser-shim.js"></script><script src="../extension/palette.js"></script><script src="../extension/content.js"></script>
+</head><body>
+<div class="qa-controls"><strong>Synthetic Google QA</strong><button data-app="drive">Drive</button><button data-app="docs">Docs</button><button data-app="sheets">Sheets</button><button data-app="calendar">Calendar</button><button data-mode="dark">Dark</button><button data-mode="light">Light</button><button data-mode="system">System</button><label><input id="canvas" type="checkbox" checked> Dark document pages</label><button id="menu">Open menu</button><button id="check">Check current view</button></div>
+<p class="qa-note">Component fixture with synthetic data, not an installed-extension test on Google. Use print preview to check that original colors return.</p>
+<div class="workspace" id="workspace"></div>
+<div class="goog-menu" role="menu" hidden><div class="goog-menuitem" role="menuitem"><span class="goog-menuitem-content">Example menu item</span></div><div class="goog-menuitem goog-menuitem-highlight" role="menuitem">Highlighted item</div><label>Search <input placeholder="Find a file"></label></div>
+<pre id="checks" role="status"></pre>
+<script>
+const views = {
+drive:`<header role="banner">Drive <button>New</button></header><main role="main"><h1>My Drive</h1><div role="grid"><div role="row"><div role="columnheader">Name</div><div role="columnheader">Owner</div><div role="columnheader">Updated</div></div><div role="row"><div role="gridcell">Example proposal</div><div role="gridcell">You</div><div role="gridcell">Today</div></div><div role="row" aria-selected="true"><div role="gridcell">Selected spreadsheet</div><div role="gridcell">You</div><div role="gridcell">Yesterday</div></div></div></main>`,
+docs:`<div id="docs-chrome"><header role="banner">Example document</header><div class="docs-menubar" role="menubar"><button class="menu-button goog-control" role="menuitem">File</button><button class="menu-button goog-control" role="menuitem">Edit</button></div><div class="docs-toolbar" role="toolbar"><button class="goog-toolbar-button">Undo</button><button class="goog-toolbar-menu-button">100%</button><button class="goog-toolbar-menu-button">Arial</button></div></div><div id="docs-editor"><div class="kix-appview-editor"><div class="kix-page-paginated"><canvas class="kix-canvas-tile-content" width="760" height="430"></canvas></div></div></div>`,
+sheets:`<div id="docs-chrome"><header role="banner">Example spreadsheet</header><div class="docs-menubar" role="menubar"><button class="menu-button goog-control" role="menuitem">File</button><button class="menu-button goog-control" role="menuitem">Data</button></div><div class="docs-toolbar" role="toolbar">Formula <input value="=SUM(B2:B4)" aria-label="Formula"></div></div><div class="grid-container"><canvas width="1200" height="430"></canvas></div><div class="docs-sheet-tab docs-sheet-active-tab"><span class="docs-sheet-tab-name">Sheet1</span></div>`,
+calendar:`<header role="banner">Calendar <button>Today</button><button>Week</button></header><main role="main"><div class="week" role="grid">${['Monday','Tuesday','Wednesday','Thursday','Friday'].map((d,i)=>`<section class="day" role="gridcell">${d}<div class="event" data-eventid="example-${i}" style="background-color:${['#3367d6','#137333','#8e24aa','#a14200','#b3261e'][i]};color:#fff">Example event<br>9:00 AM</div></section>`).join('')}</div></main>`
+};
+function show(app){document.documentElement.dataset.hsdmApp=app;document.getElementById('workspace').innerHTML=views[app];draw(app);document.getElementById('checks').textContent='';}
+function draw(app){const c=document.querySelector('canvas');if(!c)return;const x=c.getContext('2d');x.fillStyle='#fff';x.fillRect(0,0,c.width,c.height);x.fillStyle='#1f1f1f';x.font='bold 26px system-ui';x.fillText(app==='docs'?'A clearer workspace after hours.':'Account                       Stage                  Total',36,54);x.font='17px system-ui';for(let i=0;i<5;i++){x.fillStyle='#1f1f1f';x.fillText(app==='docs'?'This document contains synthetic sample text.':`Example ${i+1}                   Evaluation          ${(i+1)*100}`,36,105+i*48);x.strokeStyle='#ddd';x.beginPath();x.moveTo(24,125+i*48);x.lineTo(c.width-24,125+i*48);x.stroke();}['#db4437','#0f9d58','#4285f4'].forEach((color,i)=>{x.fillStyle=color;x.fillRect(c.width-180+i*45,335,35,55);});}
+document.querySelectorAll('[data-app]').forEach(b=>b.onclick=()=>show(b.dataset.app));
+document.querySelectorAll('[data-mode]').forEach(b=>b.onclick=()=>chrome.storage.local.set({mode:b.dataset.mode}));
+document.getElementById('canvas').onchange=e=>{document.documentElement.dataset.hsdmCanvas=e.target.checked?'dark':'original';};
+document.getElementById('menu').onclick=()=>{document.querySelector('.goog-menu').hidden=!document.querySelector('.goog-menu').hidden;};
+document.getElementById('check').onclick=()=>{
+ const root=document.documentElement,dark=root.dataset.hsdmTheme==='dark',app=root.dataset.hsdmApp;
+ const expected=dark?'rgb(38, 36, 34)':'rgb(255, 255, 255)',checks=[];
+ checks.push([getComputedStyle(document.body).backgroundColor===expected,'Body follows appearance']);
+ const canvas=document.querySelector(app==='docs'?'.kix-canvas-tile-content':'.grid-container');
+ if(canvas)checks.push([(getComputedStyle(canvas).filter!=='none')===(dark&&root.dataset.hsdmCanvas==='dark'),'Canvas filter follows document-color switch']);
+ const label=document.querySelector('.menu-button');if(label)checks.push([getComputedStyle(label).color===(dark?'rgb(227, 224, 222)':'rgb(31, 31, 31)'),'Menu label contrast']);
+ const event=document.querySelector('[data-eventid]');if(event)checks.push([getComputedStyle(event).backgroundColor==='rgb(51, 103, 214)'&&getComputedStyle(event).color==='rgb(255, 255, 255)','Calendar event identity retained']);
+ document.getElementById('checks').textContent=checks.map(([ok,name])=>(ok?'PASS: ':'FAIL: ')+name).join('\n');
+};
+show('drive');
+</script></body></html>
