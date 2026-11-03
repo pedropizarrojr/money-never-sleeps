@@ -18,7 +18,7 @@ An independent community project. Not affiliated with or endorsed by HubSpot, Li
 
 ## Install
 
-[Download the extension ZIP](https://github.com/pedropizarrojr/money-never-sleeps/raw/refs/heads/main/downloads/money-never-sleeps-0.5.0.zip)
+[Download the extension ZIP](https://github.com/pedropizarrojr/money-never-sleeps/raw/refs/heads/main/downloads/money-never-sleeps-0.5.0-linkedin-fix.zip)
 and unzip it. In Chrome, open
 `chrome://extensions`, enable **Developer mode**, click **Load unpacked**, and
 select the folder containing `manifest.json`. Refresh existing supported tabs once.
@@ -146,6 +146,11 @@ visible focus indicators. Curated text and control colors have automated contras
 checks. See [DESIGN.md](DESIGN.md) for the palette, rationale and primary references.
 
 ## Version 0.5.0
+
+The current download includes the [LinkedIn first-load and contrast fix](docs/linkedin-first-load-fix.md).
+Existing 0.5.0 installations can receive it through **Check for theme updates**
+while dark mode and automatic theme updates are enabled. The extension base
+version stays 0.5.0 because this patch changes supported CSS only.
 
 - Added cached, automatic theme-rule updates from the project's fixed GitHub channel.
 - Added a popup off switch, check button and theme/extension version status.
