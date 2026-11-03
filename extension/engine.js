@@ -29,13 +29,41 @@
     return out.join("");
   }
 
+  function scopeSelectors(text) {
+    const parts = [];
+    let start = 0, depth = 0, quote = "", escaped = false, pseudo = -1;
+    function append(end) {
+      const item = text.slice(start, end).trim();
+      if (item) {
+        // Pseudo-elements cannot appear inside :is(). Keep their suffix outside
+        // the root match, and prefix each descendant selector separately.
+        const base = pseudo < 0 ? item : text.slice(start, pseudo).trim() || "*";
+        const suffix = pseudo < 0 ? "" : text.slice(pseudo, end).trim();
+        parts.push(`:where(${selector}):is(${base})${suffix}`, `:where(${selector}) ${item}`);
+      }
+      start = end + 1; pseudo = -1;
+    }
+    for (let i = 0; i < text.length; i++) {
+      const c = text[i];
+      if (escaped) { escaped = false; continue; }
+      if (c === "\\") { escaped = true; continue; }
+      if (quote) { if (c === quote) quote = ""; continue; }
+      if (c === '"' || c === "'") { quote = c; continue; }
+      if (c === "(" || c === "[") depth++;
+      else if (c === ")" || c === "]") depth--;
+      else if (!depth && c === ",") append(i);
+      else if (!depth && pseudo < 0 && c === ":" && (text[i + 1] === ":" || /^:(?:before|after|first-line|first-letter)\b/.test(text.slice(i)))) pseudo = i;
+    }
+    append(text.length);
+    return parts.join(",");
+  }
+
   function rulesToCss(rules) {
     let css = "";
     for (const rule of rules) {
       if (rule.type === CSSRule.STYLE_RULE) {
-        // Preserve original selector grouping, including :is() and :not().
         const body = declarations(rule.style);
-        if (body) css += `:where(${selector}):is(${rule.selectorText}),:where(${selector}) :is(${rule.selectorText}){${body}}\n`;
+        if (body) css += `${scopeSelectors(rule.selectorText)}{${body}}\n`;
       } else if (rule.type === CSSRule.MEDIA_RULE || rule.type === CSSRule.SUPPORTS_RULE) {
         const nested = rulesToCss(rule.cssRules);
         if (nested) css += `${rule.cssText.slice(0, rule.cssText.indexOf("{"))}{${nested}}\n`;

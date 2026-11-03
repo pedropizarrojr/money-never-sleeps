@@ -1,6 +1,25 @@
 /* SPDX-License-Identifier: MIT
    Keep the entire navigation rail on one surface, including empty space. */
 @media screen {
+  html[data-hsdm-theme="dark"] [class*="Shimmer__ShimmerFill"] {
+    background-color: #33302e !important;
+  }
+  html[data-hsdm-theme="dark"] [class*="Shimmer__ShimmerFill"]::after {
+    background: linear-gradient(to right, #33302e, #46423d 40%, #33302e 80%) !important;
+  }
+  /* This SVG is part of the popover surface, rather than chart artwork. */
+  html[data-hsdm-theme="dark"] [data-component-name="UIPopover"] {
+    background-color: #33302e !important;
+    border-color: #625d57 !important;
+  }
+  html[data-hsdm-theme="dark"] svg[data-test-id="popover-arrow"],
+  html[data-hsdm-theme="dark"] svg[data-test-id="popover-arrow"] path:not([fill="none"]) {
+    fill: #33302e !important;
+    stroke: #33302e !important;
+  }
+  html[data-hsdm-theme="dark"] svg[data-test-id="popover-arrow"] path[fill="none"] {
+    stroke: #625d57 !important;
+  }
   /* Static document_start coverage prevents unthemed table rows from painting
      white while HubSpot adds data or inserts new CSS-in-JS rules. */
   html[data-hsdm-theme="dark"] :is(table,[role="table"],[role="grid"]) :is(tbody,tr,td,[role="rowgroup"],[role="row"],[role="cell"],[role="gridcell"]) {

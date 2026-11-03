@@ -7,6 +7,16 @@
   html[data-hsdm-theme="dark"] iframe {
     color-scheme: dark !important;
   }
+  /* Filter chips can appear before LinkedIn's late CSS-in-JS rules settle. */
+  html[data-hsdm-theme="dark"] label[for] {
+    color: #e3e0de !important;
+  }
+  /* LinkedIn UI glyphs with no fill fall back to SVG black. Keep artwork and
+     explicitly colored symbols intact; only monochrome UI icons inherit. */
+  html[data-hsdm-theme="dark"] svg[data-supported-dps]:not([fill]) {
+    color: inherit !important;
+    fill: currentColor !important;
+  }
   /* These structural surfaces exist before the dynamic adapter scans their
      generated classes, so new sections don't first appear as white cards. */
   html[data-hsdm-theme="dark"] :is([role="listitem"], [aria-label="Sidebar"], [aria-label="Primary content"], [aria-label="Aside"], #wwu-container, #ads-container, .ads-container) {

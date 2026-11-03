@@ -9,6 +9,15 @@
   let queue = [], offset = 0;
   const dirty = new Set(), records = new Map(), contexts = new Map();
 
+  function sheetState(root) {
+    const sheets = new Set([...(root.styleSheets || []), ...(root.adoptedStyleSheets || [])]);
+    return [...sheets].filter((sheet) => sheet.ownerNode?.dataset?.hsdmOwned !== "true").map((sheet) => {
+      let count = -1;
+      try { count = sheet.cssRules.length; } catch { /* Cross-origin load events cover these sheets. */ }
+      return [sheet, count, sheet.disabled];
+    });
+  }
+
   function enqueue(root) {
     if (!active || !root || ![1, 11].includes(root.nodeType) || root.closest?.(skip)) return;
     for (let parent = root.parentNode; parent; parent = parent.parentNode) {
@@ -32,12 +41,27 @@
   function register(root) {
     if (contexts.has(root)) return contexts.get(root);
     const shadow = root !== document;
-    const context = { root, shadow, style: null, observer: null };
+    const context = { root, shadow, style: null, observer: null, sheets: sheetState(root) };
     contexts.set(root, context);
     context.observer = new MutationObserver((changes) => {
       for (const change of changes) {
-        const target = change.target;
-        if (![1, 11].includes(target.nodeType) || target.closest?.('[data-hsdm-owned],style,script')) continue;
+        const target = change.target.nodeType === 3 ? change.target.parentElement : change.target;
+        if (!target || target.closest?.('[data-hsdm-owned]')) continue;
+        if (change.attributeName === "data-hsdm-li") {
+          // Hydration can remove attributes on a reused element. Repair only
+          // missing/replaced markers; ignore our own writes to avoid a loop.
+          const record = records.get(target);
+          if (record && target.getAttribute("data-hsdm-li") !== record.id) enqueue(target);
+          continue;
+        }
+        const isSheet = (node) => node.nodeType === 1 && !node.dataset?.hsdmOwned &&
+          (node.matches?.('style,link[rel="stylesheet"]') || node.querySelector?.('style,link[rel="stylesheet"]'));
+        if (target.matches?.('style,link[rel="stylesheet"]') ||
+            [...(change.addedNodes || []), ...(change.removedNodes || [])].some(isSheet)) {
+          enqueue(shadow ? root : document.documentElement);
+          continue;
+        }
+        if (![1, 11].includes(target.nodeType) || target.closest?.('style,script')) continue;
         if (change.type === "attributes") enqueue(target);
         else if (change.type === "childList") {
           change.addedNodes.forEach((node) => { if (node.nodeType === 1) enqueue(node); });
@@ -46,7 +70,8 @@
       }
     });
     context.observer.observe(shadow ? root : document.documentElement, {
-      childList: true, subtree: true, attributes: true, attributeFilter: ["class", "style"]
+      childList: true, subtree: true, characterData: true, attributes: true,
+      attributeFilter: ["class", "style", "href", "rel", "media", "disabled", "data-hsdm-li"]
     });
     return context;
   }
@@ -96,7 +121,7 @@ ${controlCss(p)}
   function controlCss(p) {
     // LinkedIn's header symbols often use <svg><use> without a fill attribute.
     // They must be targeted by purpose, rather than svg[fill=currentColor].
-    const buttons = `${p} :is(.msg-overlay-bubble-header__controls button,.msg-overlay-conversation-bubble-header button,button[class*="msg-overlay-bubble-header__control"])`;
+    const buttons = `${p} :is(.msg-overlay-bubble-header__controls button,.msg-overlay-conversation-bubble-header button,button[class*="msg-"]:not(:disabled):not([aria-disabled="true"]))`;
     return `${buttons}{color:#fff !important;}
 ${buttons} :is(svg,li-icon){color:#fff !important;fill:#fff !important;}
 ${buttons} svg :is(use,path){fill:inherit !important;}
@@ -184,13 +209,20 @@ ${buttons} svg [stroke]:not([stroke="none"]){stroke:#fff !important;}`;
     active = true;
     register(document);
     document.addEventListener("load", onLoad, true);
-    // attachShadow() on an existing host emits no DOM mutation. Check the
-    // known chat host for this late-attachment case without scanning the feed.
+    // CSS-in-JS insertRule() and attachShadow() emit no DOM mutations. Check
+    // lightweight fingerprints; only rescan when page styles actually change.
     timer = setInterval(() => {
       if (document.hidden) return;
+      for (const context of contexts.values()) {
+        const next = sheetState(context.root);
+        if (next.length !== context.sheets.length || next.some((entry, i) => entry.some((value, j) => value !== context.sheets[i]?.[j]))) {
+          context.sheets = next;
+          enqueue(context.shadow ? context.root : document.documentElement);
+        }
+      }
       const root = document.getElementById("interop-outlet")?.shadowRoot;
       if (root && !contexts.has(root)) { register(root); enqueue(root); }
-    }, 1000);
+    }, 250);
     enqueue(document.documentElement);
   }
 
