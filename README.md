@@ -14,7 +14,7 @@ An independent community project. Not affiliated with or endorsed by HubSpot.
 
 ## Install
 
-[Download the extension ZIP](https://github.com/pedropizarrojr/hubspot-dark-mode/raw/refs/heads/main/downloads/money-never-sleeps-0.3.0.zip)
+[Download the extension ZIP](https://github.com/pedropizarrojr/money-never-sleeps/raw/refs/heads/main/downloads/money-never-sleeps-0.3.0.zip)
 and unzip it. In Chrome, open
 `chrome://extensions`, enable **Developer mode**, click **Load unpacked**, and
 select the folder containing `manifest.json`. Refresh existing HubSpot and LinkedIn tabs once.
