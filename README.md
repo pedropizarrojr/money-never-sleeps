@@ -14,7 +14,7 @@ An independent community project. Not affiliated with or endorsed by HubSpot.
 
 ## Install
 
-[Download the extension ZIP](https://github.com/pedropizarrojr/money-never-sleeps/raw/refs/heads/main/downloads/money-never-sleeps-0.3.2.zip)
+[Download the extension ZIP](https://github.com/pedropizarrojr/money-never-sleeps/raw/refs/heads/main/downloads/money-never-sleeps-0.3.3.zip)
 and unzip it. In Chrome, open
 `chrome://extensions`, enable **Developer mode**, click **Load unpacked**, and
 select the folder containing `manifest.json`. Refresh existing HubSpot and LinkedIn tabs once.
@@ -80,6 +80,16 @@ The default uses warm charcoal and layered grays, lighter raised surfaces, off-w
 visible focus indicators. Curated text and control colors have automated contrast
 checks. See [DESIGN.md](DESIGN.md) for the palette, rationale and primary references.
 
+## Version 0.3.3
+
+- Rescan LinkedIn after late stylesheets and CSS-in-JS rules arrive.
+- Restore theme markers if page hydration removes them, without an observer loop.
+- Improve filter-label and messaging-action icon contrast.
+- Fix HubSpot pseudo-element selectors, including white loading shimmer.
+- Match HubSpot popover pointers to the raised warm-gray surface.
+
+See [live QA notes](docs/qa-0.3.3/README.md) for browser observations and verification limits.
+
 ## Version 0.3.2
 
 - Fixed LinkedIn ad frames detecting System mode as light while the page is dark.
@@ -127,7 +137,7 @@ npm run check
 npm run package
 ```
 
-The ZIP is written to `dist/money-never-sleeps-0.3.2.zip`, with `manifest.json` at
+The ZIP is written to `dist/money-never-sleeps-0.3.3.zip`, with `manifest.json` at
 its root. Packaging uses fixed timestamps for reproducible output.
 
 For a synthetic browser fixture, run `npm run preview` locally and visit
