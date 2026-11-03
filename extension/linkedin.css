@@ -1,5 +1,12 @@
 /* SPDX-License-Identifier: MIT */
 @media screen {
+  /* LinkedIn explicitly gives ad iframes color-scheme: light. Chrome derives
+     an embedded document's prefers-color-scheme from the iframe element, so
+     the frame's System mode otherwise stays light even on a dark parent page.
+     Let the existing frame adapter recolor CSS, preserving image pixels. */
+  html[data-hsdm-theme="dark"] iframe {
+    color-scheme: dark !important;
+  }
   /* These structural surfaces exist before the dynamic adapter scans their
      generated classes, so new sections don't first appear as white cards. */
   html[data-hsdm-theme="dark"] :is([role="listitem"], [aria-label="Sidebar"], [aria-label="Primary content"], [aria-label="Aside"], #wwu-container, #ads-container, .ads-container) {
