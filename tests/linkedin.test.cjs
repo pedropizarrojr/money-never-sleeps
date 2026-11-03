@@ -5,7 +5,7 @@ const fs = require('node:fs');
 
 function harness(count = 3) {
   let serial = 0, interval;
-  const frames = new Map(), callbacks = new Map(), sheets = [];
+  const frames = new Map(), callbacks = new Map(), sheets = [], microtasks = [];
   let doc;
   function node(tag = 'DIV', colors = {}) {
     return {nodeType:1,tagName:tag,isConnected:true,attrs:{},children:[],colors:{color:'rgba(0, 0, 0, 0.9)','background-color':'rgb(255, 255, 255)',...colors},
@@ -26,13 +26,15 @@ function harness(count = 3) {
     getComputedStyle(element){assert.ok(sheets.filter(s=>s.isConnected).every(s=>s.disabled),'Read original colors with all generated sheets disabled');return {getPropertyValue(key){return key.endsWith('-width')?'0px':element.colors[key]||'none';}};},
     MutationObserver:class{constructor(fn){this.fn=fn;}observe(target){callbacks.set(target,this.fn);}disconnect(){}},
     requestAnimationFrame(fn){const id=++serial;frames.set(id,fn);return id;},cancelAnimationFrame(id){frames.delete(id);},
-    setInterval(fn){interval=fn;return 1;},clearInterval(){interval=null;}
+    setInterval(fn){interval=fn;return 1;},clearInterval(){interval=null;},queueMicrotask(fn){microtasks.push(fn);}
   });
   vm.runInContext(fs.readFileSync('extension/palette.js','utf8'),context);
   vm.runInContext(fs.readFileSync('extension/linkedin.js','utf8'),context);
-  function drain(){let guard=0;while(frames.size){assert.ok(++guard<50,'Frames settle');const [id,fn]=frames.entries().next().value;frames.delete(id);fn();}}
+  function flushMicrotasks(){while(microtasks.length)microtasks.shift()();}
+  function drain(){let guard=0;while(frames.size||microtasks.length){assert.ok(++guard<50,'Work settles');flushMicrotasks();if(frames.size){const [id,fn]=frames.entries().next().value;frames.delete(id);fn();}}}
   function shadow(host){const tree={nodeType:11,host,isConnected:true,children:[],querySelectorAll:root.querySelectorAll,append:root.append};host.shadowRoot=tree;return tree;}
   return {engine:context.HSDMEngine,root,node,frames,drain,shadow,tick:()=>interval?.(),
+    flushMicrotasks,pending:()=>frames.size+microtasks.length,
     style:(tree=doc)=>sheets.find(s=>s.isConnected&&s.ownerRoot===tree)||sheets.find(s=>s.ownerRoot===tree),
     mutate:(records,target=root)=>callbacks.get(target)(records)};
 }
@@ -47,8 +49,7 @@ test('LinkedIn opaque classes are themed from colors without CSSOM or content ac
   assert.equal(h.style().disabled,false);
 });
 test('large feeds are split across frames and newly added cards are themed',()=>{
-  const h=harness(520);h.engine.start();
-  const [id,fn]=h.frames.entries().next().value;h.frames.delete(id);fn();
+  const h=harness(520);h.engine.start();h.flushMicrotasks();
   assert.ok(h.frames.size>0);h.drain();
   const added=h.node();h.root.children.push(added);
   h.mutate([{target:h.root,type:'childList',addedNodes:[added],removedNodes:[]}]);h.drain();
@@ -68,7 +69,7 @@ test('native dark surfaces stay dark and media elements are excluded',()=>{
   assert.ok(child.attrs['data-hsdm-li']);assert.match(h.style().textContent,/hsl\(30 6%/);assert.equal(image.attrs['data-hsdm-li'],undefined);
 });
 test('switching back to original removes styles and cancels pending scans',()=>{
-  const h=harness();h.engine.start();h.drain();h.engine.refresh();assert.ok(h.frames.size);
+  const h=harness();h.engine.start();h.drain();h.engine.refresh();assert.ok(h.pending());
   h.engine.stop();h.drain();assert.equal(h.style().isConnected,false);assert.equal(h.frames.size,0);
   assert.equal(h.root.children[0].attrs['data-hsdm-li'],undefined);
 });
@@ -94,4 +95,18 @@ test('late-attached chat roots and messages inserted inside them are discovered'
   h.drain();assert.ok(message.attrs['data-hsdm-li']);
   host.isConnected=false;h.engine.refresh();h.drain();
   assert.equal(h.style(tree).isConnected,false);
+});
+test('newly inserted cards receive their first dark pass before an animation frame',()=>{
+  const h=harness();h.engine.start();h.drain();const card=h.node();h.root.children.push(card);
+  h.mutate([{target:h.root,type:'childList',addedNodes:[card],removedNodes:[]}]);
+  assert.equal(h.frames.size,0);h.flushMicrotasks();
+  assert.ok(card.attrs['data-hsdm-li']);
+  assert.match(h.style().textContent,/background-color:hsl/);
+});
+test('messaging header symbols without fill attributes get explicit white fills',()=>{
+  const h=harness();const tree=h.shadow(h.root.children[0]);tree.append(h.node());
+  h.engine.start();h.drain();
+  assert.match(h.style(tree).textContent,/msg-overlay-bubble-header__controls button/);
+  assert.match(h.style(tree).textContent,/:is\(svg,li-icon\)\{color:#fff !important;fill:#fff !important;/);
+  assert.match(h.style(tree).textContent,/svg :is\(use,path\)\{fill:inherit !important;/);
 });

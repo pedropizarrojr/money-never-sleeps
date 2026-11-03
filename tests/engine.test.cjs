@@ -21,7 +21,7 @@ function harness() {
     CSSRule:{STYLE_RULE:1,IMPORT_RULE:3,MEDIA_RULE:4,SUPPORTS_RULE:12},
     getComputedStyle() {reads++;return decl({'--trellis-color-text-primary':'#333','--t-sys-color-foundational-bg-normal-default':'#fff'});},
     MutationObserver:class {constructor(fn){observerCallback=fn;}observe(){}disconnect(){}},
-    setTimeout(fn){fn();return 1;},clearTimeout(){},setInterval(fn){interval=fn;return 1;},clearInterval(){}
+    queueMicrotask(fn){fn();},setTimeout(fn){fn();return 1;},clearTimeout(){},setInterval(fn){interval=fn;return 1;},clearInterval(){}
   });
   vm.runInContext(fs.readFileSync('extension/palette.js','utf8'),context);
   vm.runInContext(fs.readFileSync('extension/engine.js','utf8'),context);
@@ -58,4 +58,10 @@ test('disabled sheets are ignored and media conditions remain scoped', () => {
 test('unchanged refreshes reuse token results and stopping removes generated changes', () => {
   const h=harness();h.engine.start();h.engine.refresh();assert.equal(h.reads(),1);
   h.engine.stop();assert.equal(h.node().isConnected,false);assert.equal(h.inline.hasAttribute('data-hsdm-inline'),false);
+});
+test('lightweight stylesheet polling detects inserted rules without rebuilding unchanged sheets',()=>{
+  const h=harness();h.engine.start();h.tick();assert.equal(h.reads(),1);
+  h.sheet.cssRules.push(h.rule('.loading-row',{background:'#fff'}));h.tick();
+  assert.match(h.node().textContent,/:is\(\.loading-row\)/);
+  assert.equal(h.reads(),2);
 });
