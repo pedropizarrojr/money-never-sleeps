@@ -4,10 +4,12 @@
   const { transformValue } = scope.HSDMPalette;
   const selector = 'html[data-hsdm-theme="dark"]';
   let style = null, observer = null, timer = null, pending = false, active = false, epoch = 0;
+  let frame = null, delay = null, lastRefresh = -Infinity;
   let lastSheetState = [];
   let inlineId = 0;
   let tokenCss = "", tokensDirty = true;
   const cache = new WeakMap();
+  const inlineValues = new WeakMap();
 
   function sheetState() {
     const result = [];
@@ -83,9 +85,11 @@
   function refresh() {
     pending = false;
     if (!active || !document.documentElement) return;
+    lastRefresh = performance.now();
     if (!style || !style.isConnected) {
       style = document.createElement("style");
       style.id = "hsdm-generated";
+      style.dataset.hsdmOwned = "true";
       (document.head || document.documentElement).append(style);
     }
     let css = "";
@@ -130,6 +134,7 @@
     for (const element of document.querySelectorAll("[style]")) {
       if (element.closest("svg,canvas,video")) continue;
       const body = declarations(element.style);
+      inlineValues.set(element, body);
       if (!body) continue;
       if (!element.hasAttribute("data-hsdm-inline")) element.setAttribute("data-hsdm-inline", String(++inlineId));
       css += `${selector} [data-hsdm-inline="${element.getAttribute("data-hsdm-inline")}"]{${body}}\n`;
@@ -140,13 +145,24 @@
   }
 
   function schedule(event) {
-    if (event?.type === "load") tokensDirty = true;
+    // Image, avatar and media loads don't change the page's stylesheet.
+    if (event?.type === "load") {
+      if (!event.target?.matches?.('link[rel="stylesheet"]')) return;
+      tokensDirty = true;
+    }
     if (active && !pending) {
       pending = true;
       const scheduledEpoch = epoch;
-      queueMicrotask(() => {
-        if (scheduledEpoch === epoch) refresh();
-      });
+      const run = () => {
+        delay = null;
+        frame = requestAnimationFrame(() => {
+          frame = null;
+          if (scheduledEpoch === epoch) refresh();
+        });
+      };
+      const wait = Math.max(0, 100 - (performance.now() - lastRefresh));
+      if (wait) delay = setTimeout(run, wait);
+      else run();
     }
   }
 
@@ -158,12 +174,22 @@
       const relevant = records.some((record) => {
         const target = record.target.nodeType === 1 ? record.target : record.target.parentElement;
         if (target?.closest?.("#hsdm-generated")) return false;
-        if (record.type === "attributes") return record.attributeName !== "class" || target === document.documentElement;
+        if (record.type === "attributes") {
+          if (target === document.documentElement) { tokensDirty = true; return true; }
+          if (record.attributeName === "class") return false;
+          if (record.attributeName === "style") {
+            // App animations and positioning update style constantly. Only
+            // actual color declarations or a formerly themed inline need work.
+            return !target?.closest?.('svg,canvas,video') && target?.style &&
+              declarations(target.style) !== (inlineValues.get(target) || "");
+          }
+          return !!target?.matches?.('style,link[rel="stylesheet"]');
+        }
         if (target?.matches?.("style,link[rel=stylesheet]")) return true;
         return [...record.addedNodes].some((node) => node.nodeType === 1 &&
           node.id !== "hsdm-generated" && (node.matches("style,link[rel=stylesheet]") || node.querySelector("style,link[rel=stylesheet]")));
       });
-      if (relevant) { tokensDirty = true; schedule(); }
+      if (relevant) schedule();
     });
     observer.observe(document.documentElement, { subtree: true, childList: true, characterData: true, attributes: true, attributeFilter: ["style", "media", "disabled", "class"] });
     document.addEventListener("load", schedule, true);
@@ -172,7 +198,7 @@
       const next = sheetState();
       if (next.length !== lastSheetState.length || next.some((entry, i) => entry.some((value, j) => value !== lastSheetState[i]?.[j]))) schedule();
     }, 250);
-    refresh();
+    schedule();
   }
 
   function stop() {
@@ -181,11 +207,14 @@
     observer?.disconnect();
     document.removeEventListener("load", schedule, true);
     clearInterval(timer);
+    clearTimeout(delay);
+    if (frame !== null) cancelAnimationFrame(frame);
+    delay = null; frame = null;
     pending = false;
     style?.remove();
     style = null;
     document.querySelectorAll("[data-hsdm-inline]").forEach((element) => element.removeAttribute("data-hsdm-inline"));
   }
 
-  scope.HSDMEngine = Object.freeze({ start, stop, refresh });
+  scope.HSDMEngine = Object.freeze({ start, stop, refresh: schedule });
 })(globalThis);

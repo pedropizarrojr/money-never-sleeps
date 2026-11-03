@@ -5,73 +5,52 @@
   const prefix = 'html[data-hsdm-theme="dark"]';
   const skip = 'script,style,link,meta,head,img,picture,video,audio,canvas,source,track,svg,svg *,video *,[data-hsdm-preserve]';
   const properties = ["color", "background-color", "background-image", "border-top-color", "border-right-color", "border-bottom-color", "border-left-color", "box-shadow"];
-  let active = false, frame = null, timer = null, serial = 0, microtaskQueued = false, epoch = 0;
-  let queue = [], offset = 0;
-  const dirty = new Set(), records = new Map(), contexts = new Map();
+  // CSS supplies the baseline. Enhancement work has both a per-frame slice
+  // and a per-document CPU budget; a busy app must never keep us scanning.
+  const FRAME_MS = 3, DOCUMENT_MS = 100, MAX_NODES = 40, MAX_BUCKETS = 256;
+  let active = false, frame = null, timer = null, serial = 0, usedMs = 0;
+  let seen = new WeakSet(), records = new WeakMap();
+  const jobs = [], queued = new Set(), repairs = new Set(), contexts = new Map(), colors = new Map();
+  const now = () => performance.now();
 
-  function sheetState(root) {
-    const sheets = new Set([...(root.styleSheets || []), ...(root.adoptedStyleSheets || [])]);
-    return [...sheets].filter((sheet) => sheet.ownerNode?.dataset?.hsdmOwned !== "true").map((sheet) => {
-      let count = -1;
-      try { count = sheet.cssRules.length; } catch { /* Cross-origin load events cover these sheets. */ }
-      return [sheet, count, sheet.disabled];
-    });
+  function schedule() {
+    if (active && !document.hidden && frame === null && (jobs.length || repairs.size)) frame = requestAnimationFrame(flush);
   }
 
   function enqueue(root) {
-    if (!active || !root || ![1, 11].includes(root.nodeType) || root.closest?.(skip)) return;
-    for (let parent = root.parentNode; parent; parent = parent.parentNode) {
-      if (dirty.has(parent)) return;
-    }
-    dirty.add(root);
-    // MutationObserver callbacks and microtasks run before paint. Style the
-    // first batch in that turn instead of waiting for another animation frame.
-    if (!microtaskQueued) {
-      microtaskQueued = true;
-      if (frame !== null) { cancelAnimationFrame(frame); frame = null; }
-      const scheduledEpoch = epoch;
-      queueMicrotask(() => {
-        if (scheduledEpoch !== epoch) return;
-        microtaskQueued = false;
-        flush();
-      });
-    }
+    if (!active || usedMs >= DOCUMENT_MS || jobs.length >= 128 || !root || ![1, 11].includes(root.nodeType) || root.closest?.(skip) || queued.has(root)) return;
+    for (let parent = root.parentNode; parent; parent = parent.parentNode) if (queued.has(parent)) return;
+    // TreeWalker advances lazily; never materialize every node in a large feed.
+    const walker = document.createTreeWalker(root, 1, { acceptNode(node) { return node.matches(skip) ? 2 : 1; } });
+    jobs.push({ root, walker, first: root.nodeType === 1 });
+    queued.add(root);
+    schedule();
   }
 
   function register(root) {
     if (contexts.has(root)) return contexts.get(root);
     const shadow = root !== document;
-    const context = { root, shadow, style: null, observer: null, sheets: sheetState(root) };
+    const context = { root, shadow, style: null, observer: null, buckets: new Map() };
     contexts.set(root, context);
+    ensureStyle(context);
+    if (usedMs >= DOCUMENT_MS) return context;
     context.observer = new MutationObserver((changes) => {
       for (const change of changes) {
-        const target = change.target.nodeType === 3 ? change.target.parentElement : change.target;
-        if (!target || target.closest?.('[data-hsdm-owned]')) continue;
-        if (change.attributeName === "data-hsdm-li") {
-          // Hydration can remove attributes on a reused element. Repair only
-          // missing/replaced markers; ignore our own writes to avoid a loop.
+        const target = change.target;
+        if (target.closest?.('[data-hsdm-owned],style,script')) continue;
+        if (change.type === "attributes") {
           const record = records.get(target);
-          if (record && target.getAttribute("data-hsdm-li") !== record.id) enqueue(target);
-          continue;
-        }
-        const isSheet = (node) => node.nodeType === 1 && !node.dataset?.hsdmOwned &&
-          (node.matches?.('style,link[rel="stylesheet"]') || node.querySelector?.('style,link[rel="stylesheet"]'));
-        if (target.matches?.('style,link[rel="stylesheet"]') ||
-            [...(change.addedNodes || []), ...(change.removedNodes || [])].some(isSheet)) {
-          enqueue(shadow ? root : document.documentElement);
-          continue;
-        }
-        if (![1, 11].includes(target.nodeType) || target.closest?.('style,script')) continue;
-        if (change.type === "attributes") enqueue(target);
-        else if (change.type === "childList") {
-          change.addedNodes.forEach((node) => { if (node.nodeType === 1) enqueue(node); });
-          if (change.removedNodes.length && !change.addedNodes.length) enqueue(context.shadow ? root : document.documentElement);
+          if (record && target.getAttribute("data-hsdm-li") !== record.id) repairs.add(target);
+        } else {
+          // Removal, text changes, hover classes and layout style changes do
+          // not require rescanning existing elements or the document.
+          for (const node of change.addedNodes) if (node.nodeType === 1) enqueue(node);
         }
       }
+      schedule();
     });
     context.observer.observe(shadow ? root : document.documentElement, {
-      childList: true, subtree: true, characterData: true, attributes: true,
-      attributeFilter: ["class", "style", "href", "rel", "media", "disabled", "data-hsdm-li"]
+      childList: true, subtree: true, attributes: true, attributeFilter: ["data-hsdm-li"]
     });
     return context;
   }
@@ -81,20 +60,29 @@
     const style = document.createElement("style");
     style.id = context.shadow ? "hsdm-linkedin-shadow" : "hsdm-linkedin";
     style.dataset.hsdmOwned = "true";
+    style.textContent = `@media screen{${context.shadow ? chatCss() : controlCss(prefix)}}`;
     (context.shadow ? context.root : document.head || document.documentElement).append(style);
     context.style = style;
+    for (const [css, id] of context.buckets) style.sheet.insertRule(bucketRule(context, id, css), style.sheet.cssRules.length);
+  }
+
+  function bucketRule(context, id, css) {
+    const target = `[data-hsdm-li="${id}"]`;
+    const p = context.shadow ? `:host-context(${prefix})` : prefix;
+    const selectors = context.shadow ? `${p} ${target}` : `${p}${target},${p} ${target}`;
+    return `@media screen{${selectors}{${css}}}`;
   }
 
   function cssFor(element) {
-    const source = getComputedStyle(element);
-    const declarations = [];
+    const source = getComputedStyle(element), declarations = [];
     for (const property of properties) {
-      if (property.startsWith("border-")) {
-        const width = source.getPropertyValue(property.replace("color", "width"));
-        if (parseFloat(width) === 0) continue;
+      if (property.startsWith("border-") && parseFloat(source.getPropertyValue(property.replace("color", "width"))) === 0) continue;
+      const value = source.getPropertyValue(property), key = property + ":" + value;
+      let next = colors.get(key);
+      if (next === undefined) {
+        next = transformValue(property, value);
+        if (colors.size < 1024) colors.set(key, next);
       }
-      const value = source.getPropertyValue(property);
-      const next = transformValue(property, value);
       if (next !== value) declarations.push(`${property}:${next} !important;`);
     }
     return declarations.join("");
@@ -130,115 +118,86 @@ ${buttons} svg [stroke]:not([stroke="none"]){stroke:#fff !important;}`;
 
   function flush() {
     frame = null;
-    if (!active) return;
-    if (dirty.size) {
-      const candidates = new Set();
-      // Open shadow trees need their own stylesheet and observer. LinkedIn's
-      // interop messaging widgets are outside the main document's CSS scope.
-      for (const root of dirty) {
-        if (!root.isConnected) continue;
-        let covered = false;
-        for (let parent = root.parentNode; parent; parent = parent.parentNode) {
-          if (dirty.has(parent)) { covered = true; break; }
-        }
-        if (covered) continue;
-        const nodes = [...root.querySelectorAll("*")];
-        if (root.nodeType === 1) nodes.unshift(root);
-        for (const node of nodes) {
-          candidates.add(node);
-          if (node.shadowRoot && !contexts.has(node.shadowRoot)) {
-            register(node.shadowRoot);
-            dirty.add(node.shadowRoot);
-          }
-        }
+    if (!active || document.hidden) return;
+    const started = now(), measured = [], shadows = new Set();
+    let visited = 0;
+    // All computed-style reads finish before any selector attributes or rules
+    // are written. Never disable whole stylesheets to measure one element.
+    while (jobs.length && visited < MAX_NODES && now() - started < FRAME_MS && usedMs + now() - started < DOCUMENT_MS) {
+      const job = jobs[0];
+      const element = job.root.isConnected ? (job.first ? job.root : job.walker.nextNode()) : null;
+      job.first = false;
+      if (!element) { jobs.shift(); queued.delete(job.root); continue; }
+      visited++;
+      if (element.shadowRoot && !contexts.has(element.shadowRoot)) shadows.add(element.shadowRoot);
+      if (seen.has(element)) continue;
+      seen.add(element);
+      const context = contexts.get(element.getRootNode()) || contexts.get(document);
+      if (!context || context.buckets.size >= MAX_BUCKETS) continue;
+      measured.push({ element, context, css: cssFor(element) });
+    }
+    for (const root of shadows) { register(root); enqueue(root); }
+    for (const { element, context, css } of measured) {
+      if (!css || !element.isConnected) continue;
+      ensureStyle(context);
+      let id = context.buckets.get(css);
+      if (!id) {
+        if (context.buckets.size >= MAX_BUCKETS) continue;
+        id = String(++serial);
+        context.style.sheet.insertRule(bucketRule(context, id, css), context.style.sheet.cssRules.length);
+        context.buckets.set(css, id);
       }
-      // Fresh UI goes first; older offscreen work can finish in later frames.
-      for (const node of queue.slice(offset)) candidates.add(node);
-      dirty.clear();
-      queue = [...candidates].filter((node) => !node.closest(skip));
-      offset = 0;
+      records.set(element, { id });
+      if (element.getAttribute("data-hsdm-li") !== id) element.setAttribute("data-hsdm-li", id);
     }
-    for (const context of contexts.values()) ensureStyle(context);
-    // Disable every generated sheet together, including shadow styles, so
-    // measuring inherited colors never compounds our previous transformations.
-    for (const context of contexts.values()) context.style.disabled = true;
-    try {
-      const end = Math.min(offset + 250, queue.length);
-      for (; offset < end; offset++) {
-        const element = queue[offset];
-        if (!element.isConnected) continue;
-        const css = cssFor(element);
-        const existing = records.get(element);
-        if (!css) { records.delete(element); element.removeAttribute("data-hsdm-li"); continue; }
-        const id = existing?.id || String(++serial);
-        element.setAttribute("data-hsdm-li", id);
-        records.set(element, { id, css });
-      }
-    } finally {
-      for (const context of contexts.values()) context.style.disabled = false;
+    let repaired = 0;
+    for (const element of repairs) {
+      repairs.delete(element);
+      const record = records.get(element);
+      if (record && element.isConnected && element.getAttribute("data-hsdm-li") !== record.id) element.setAttribute("data-hsdm-li", record.id);
+      if (++repaired >= MAX_NODES) break;
     }
-    const cssByRoot = new Map();
-    for (const [element, record] of records) {
-      if (!element.isConnected) { records.delete(element); continue; }
-      const currentRoot = element.getRootNode?.() || document;
-      const context = contexts.get(currentRoot);
-      if (!context) { enqueue(element); continue; }
-      const target = `[data-hsdm-li="${record.id}"]`;
-      const p = context.shadow ? `:host-context(${prefix})` : prefix;
-      const rule = context.shadow ? `${p} ${target}{${record.css}}\n` : `${p}${target},${p} ${target}{${record.css}}\n`;
-      cssByRoot.set(currentRoot, (cssByRoot.get(currentRoot) || "") + rule);
+    usedMs += now() - started;
+    if (usedMs >= DOCUMENT_MS) {
+      jobs.length = 0; queued.clear(); repairs.clear();
+      for (const context of contexts.values()) context.observer?.disconnect();
     }
-    for (const [root, context] of contexts) {
-      if (context.shadow && !root.host.isConnected) {
-        context.observer.disconnect(); context.style.remove(); contexts.delete(root); continue;
-      }
-      const text = `@media screen{${cssByRoot.get(root) || ""}${context.shadow ? chatCss() : controlCss(prefix)}}`;
-      if (context.style.textContent !== text) context.style.textContent = text;
-    }
-    if (offset < queue.length || dirty.size) {
-      if (frame === null) frame = requestAnimationFrame(flush);
-    } else { queue = []; offset = 0; }
+    schedule();
   }
 
-  function onLoad(event) {
-    if (event.target?.matches?.('link[rel="stylesheet"]')) enqueue(document.documentElement);
+  function discoverChat() {
+    if (!active || document.hidden) return;
+    for (const [root, context] of contexts) {
+      if (context.shadow && !root.host.isConnected) {
+        context.observer?.disconnect(); context.style.remove(); contexts.delete(root);
+      } else ensureStyle(context);
+    }
+    const root = document.getElementById("interop-outlet")?.shadowRoot;
+    if (root && !contexts.has(root)) { register(root); enqueue(root); }
   }
 
   function start() {
     if (active) return;
     active = true;
+    usedMs = 0;
     register(document);
-    document.addEventListener("load", onLoad, true);
-    // CSS-in-JS insertRule() and attachShadow() emit no DOM mutations. Check
-    // lightweight fingerprints; only rescan when page styles actually change.
-    timer = setInterval(() => {
-      if (document.hidden) return;
-      for (const context of contexts.values()) {
-        const next = sheetState(context.root);
-        if (next.length !== context.sheets.length || next.some((entry, i) => entry.some((value, j) => value !== context.sheets[i]?.[j]))) {
-          context.sheets = next;
-          enqueue(context.shadow ? context.root : document.documentElement);
-        }
-      }
-      const root = document.getElementById("interop-outlet")?.shadowRoot;
-      if (root && !contexts.has(root)) { register(root); enqueue(root); }
-    }, 250);
+    discoverChat();
+    timer = setInterval(discoverChat, 1000);
     enqueue(document.documentElement);
   }
 
   function stop() {
     active = false;
-    epoch++;
-    microtaskQueued = false;
-    document.removeEventListener("load", onLoad, true);
     clearInterval(timer);
-    for (const context of contexts.values()) { context.observer.disconnect(); context.style?.remove(); }
-    contexts.clear();
     if (frame !== null) cancelAnimationFrame(frame);
     frame = null;
-    for (const element of records.keys()) element.removeAttribute("data-hsdm-li");
-    records.clear(); dirty.clear(); queue = []; offset = 0;
+    for (const context of contexts.values()) {
+      context.observer?.disconnect(); context.style.remove();
+      context.root.querySelectorAll("[data-hsdm-li]").forEach(element => element.removeAttribute("data-hsdm-li"));
+    }
+    contexts.clear(); jobs.length = 0; queued.clear(); repairs.clear(); colors.clear();
+    seen = new WeakSet(); records = new WeakMap();
   }
 
-  scope.HSDMEngine = Object.freeze({ start, stop, refresh() { enqueue(document.documentElement); } });
+  scope.HSDMEngine = Object.freeze({ start, stop, refresh() { discoverChat(); schedule(); } });
 })(globalThis);

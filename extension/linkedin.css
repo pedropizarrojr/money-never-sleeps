@@ -1,5 +1,15 @@
 /* SPDX-License-Identifier: MIT */
 @media screen {
+  /* CSS handles common UI immediately, including content inserted after the
+     bounded enhancement budget is used. No scroll or pointer handler needed. */
+  html[data-hsdm-theme="dark"] :where(h1,h2,h3,h4,h5,h6,p,label,li,small,strong,time,span,a,button) {
+    color: #e3e0de !important;
+  }
+  html[data-hsdm-theme="dark"] :is(main,article,section,aside,dialog,[role="dialog"],[role="menu"],.scaffold-layout__main,.scaffold-layout__aside,.msg-convo-wrapper,.msg-s-message-list-container,.msg-form,[componentkey*="profile"],[componentkey*="card"]) {
+    background-color: #2d2b28 !important;
+    color: #e3e0de !important;
+    border-color: #625d57 !important;
+  }
   /* LinkedIn explicitly gives ad iframes color-scheme: light. Chrome derives
      an embedded document's prefers-color-scheme from the iframe element, so
      the frame's System mode otherwise stays light even on a dark parent page.
