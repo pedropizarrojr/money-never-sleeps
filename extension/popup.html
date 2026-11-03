@@ -18,6 +18,12 @@
   </fieldset>
   <label class="canvas-option"><input type="checkbox" id="dark-google-canvas" checked disabled><span><strong>Dark document pages</strong><small>Docs and Sheets. Image and chart colors may shift.</small></span></label>
   <p id="status" role="status" aria-live="polite">Loading your preference…</p>
-  <footer>HubSpot · LinkedIn · Drive · Docs · Sheets · Calendar<br>Settings stay on this device.</footer>
+  <section class="updates" aria-label="Theme updates">
+    <label class="canvas-option"><input type="checkbox" id="auto-theme-updates" checked disabled><span><strong>Automatic theme updates</strong><small>Checks GitHub daily while dark mode is on.</small></span></label>
+    <p id="update-status" role="status" aria-live="polite">Loading update settings…</p>
+    <button id="check-updates" type="button" disabled>Check for theme updates</button>
+    <small>Colors and CSS fixes update automatically. Extension code updates still need a manual install.</small>
+  </section>
+  <footer>HubSpot · LinkedIn · Drive · Docs · Sheets · Calendar<br>Preferences and the theme cache stay on this device.</footer>
 </body>
 </html>

@@ -10,6 +10,7 @@
         /^\/spreadsheets(?:\/|$)/.test(location.pathname) ? "sheets" : null) : null;
   // Google uses static CSS only. No engine, DOM traversal or polling is started.
   const engine = globalThis.HSDMEngine;
+  const updates = globalThis.HSDMThemeUpdates;
   let mode = "system", darkGoogleCanvas = true, modeRevision = 0, canvasRevision = 0;
   let settingsReady = false, engineRunning = false, systemListening = false;
 
@@ -42,6 +43,7 @@
       if (dark) engine.start();
       else engine.stop();
     }
+    if (settingsReady && updates) { if (dark) updates.start(); else updates.stop(); }
   }
 
   if (document.documentElement) apply();
@@ -55,11 +57,12 @@
   // Every open tab and permitted frame observes the OS/browser preference live.
   watchSystem();
   document.addEventListener("visibilitychange", () => {
+    updates?.resume();
     if (document.hidden) return;
     if (mode === "system") apply();
     if (engineRunning) engine.refresh();
   });
-  window.addEventListener("pageshow", () => { if (mode === "system" || engineRunning) apply(); });
+  window.addEventListener("pageshow", () => { if (mode === "system" || engineRunning) apply(); updates?.resume(); });
 
   chrome.storage.onChanged.addListener((changes, area) => {
     if (area !== "local" || (!changes.mode && !changes.darkGoogleCanvas)) return;

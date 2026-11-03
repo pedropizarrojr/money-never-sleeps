@@ -33,6 +33,7 @@
     const context = { root, shadow, style: null, observer: null, buckets: new Map() };
     contexts.set(root, context);
     ensureStyle(context);
+    if (shadow) scope.HSDMThemeUpdates?.attach(root);
     if (usedMs >= DOCUMENT_MS) return context;
     context.observer = new MutationObserver((changes) => {
       for (const change of changes) {
@@ -169,6 +170,7 @@ ${buttons} svg [stroke]:not([stroke="none"]){stroke:#fff !important;}`;
     if (!active || document.hidden) return;
     for (const [root, context] of contexts) {
       if (context.shadow && !root.host.isConnected) {
+        scope.HSDMThemeUpdates?.detach(root);
         context.observer?.disconnect(); context.style.remove(); contexts.delete(root);
       } else ensureStyle(context);
     }
@@ -194,6 +196,7 @@ ${buttons} svg [stroke]:not([stroke="none"]){stroke:#fff !important;}`;
     if (frame !== null) cancelAnimationFrame(frame);
     frame = null; serial = 0; usedMs = 0;
     for (const context of contexts.values()) {
+      if (context.shadow) scope.HSDMThemeUpdates?.detach(context.root);
       context.observer?.disconnect(); context.style.remove();
       context.root.querySelectorAll("[data-hsdm-li]").forEach(element => element.removeAttribute("data-hsdm-li"));
     }

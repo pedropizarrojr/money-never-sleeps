@@ -1,12 +1,14 @@
 {
   "manifest_version": 3,
   "name": "Money Never Sleeps",
-  "version": "0.4.1",
+  "version": "0.5.0",
   "description": "Warm dark mode for HubSpot, LinkedIn, Google Drive, Docs, Sheets and Calendar. Follows your system appearance.",
   "minimum_chrome_version": "119",
   "permissions": [
     "storage"
   ],
+  "host_permissions": ["https://raw.githubusercontent.com/*"],
+  "background": { "service_worker": "update-worker.js" },
   "action": {
     "default_title": "Money Never Sleeps",
     "default_popup": "popup.html",
@@ -37,6 +39,8 @@
       "js": [
         "palette.js",
         "engine.js",
+        "update-policy.js",
+        "theme-updates.js",
         "content.js"
       ],
       "run_at": "document_start",
@@ -55,6 +59,8 @@
       "js": [
         "palette.js",
         "linkedin.js",
+        "update-policy.js",
+        "theme-updates.js",
         "content.js"
       ],
       "run_at": "document_start",
@@ -70,7 +76,7 @@
         "https://calendar.google.com/*"
       ],
       "css": ["google.css"],
-      "js": ["palette.js", "content.js"],
+      "js": ["palette.js", "update-policy.js", "theme-updates.js", "content.js"],
       "run_at": "document_start",
       "all_frames": false,
       "world": "ISOLATED"
