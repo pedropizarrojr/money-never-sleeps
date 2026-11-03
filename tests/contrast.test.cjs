@@ -24,4 +24,11 @@ test('elevated surfaces are lighter than the page and opaque black UI is softene
   assert.notEqual(transformValue('background-color','#000'),'#000');
   assert.equal(transformValue('background-color','rgba(0,0,0,0.4)'),'rgba(0,0,0,0.4)');
 });
+test('Google selection and high-elevation colors retain readable text contrast',()=>{
+  for (const surface of ['#3c3935','#454039','#51442e']) {
+    assert.ok(ratio('#e3e0de',surface)>=4.5, `Google text/${surface}`);
+    assert.ok(ratio('#b8b2ac',surface)>=4.5, `Google secondary text/${surface}`);
+  }
+  assert.ok(ratio('#262422','#d6b77c')>=4.5, 'Google filled primary control');
+});
 module.exports={ratio};
