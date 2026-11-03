@@ -69,9 +69,16 @@ overrides; LinkedIn's own saved appearance preference still applies.
 LinkedIn also has a [native system appearance setting](https://www.linkedin.com/help/linkedin/answer/a524473/switch-between-dark-and-light-mode).
 This extension provides a shared control for LinkedIn and HubSpot.
 
+## Dark theme design
+
+The default uses charcoal and slate, lighter raised surfaces, off-white text and
+visible focus indicators. Curated text and control colors have automated contrast
+checks. See [DESIGN.md](DESIGN.md) for the palette, rationale and primary references.
+
 ## Version 0.2.0
 
 - Added LinkedIn support under the same appearance control.
+- Replaced near-black defaults with a softer, layered charcoal/slate palette.
 - Unified the full HubSpot sidebar background, including empty space.
 - Added explicit navigation hover and active states.
 - Darkened neutral gradient fades and bright shadows without recoloring image files.
