@@ -16,7 +16,7 @@ test('color parser supports alpha, short hex and percentage channels', () => {
   assert.equal(p.parseColor('var(--anything)'), null);
 });
 test('backgrounds darken, text brightens, and transparent fills stay transparent', () => {
-  assert.match(p.transformValue('background-color', '#fff'), /11\.5%/);
+  assert.match(p.transformValue('background-color', '#fff'), /17\.0%/);
   assert.match(p.transformValue('color', '#333'), /85\.6%/);
   assert.equal(p.transformValue('background', 'rgba(255,255,255,0)'), 'rgba(255,255,255,0)');
 });
@@ -34,4 +34,10 @@ test('primary text tokens transform while foreground on colored actions is prese
 test('status fills and already dark navigation keep their colors', () => {
   assert.equal(p.transformValue('background-color', '#333'), '#333');
   assert.equal(p.transformValue('background-color', '#008000'), '#008000');
+});
+test('neutral gradient fades and bright shadows darken without changing image URLs', () => {
+  const gradient='linear-gradient(rgba(255,255,255,0), #fff)';
+  assert.notEqual(p.transformValue('background-image',gradient),gradient);
+  assert.equal(p.transformValue('background-image','url("white.png")'),'url("white.png")');
+  assert.notEqual(p.transformValue('box-shadow','0 0 8px #fff'),'0 0 8px #fff');
 });
