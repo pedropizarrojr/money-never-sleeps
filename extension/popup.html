@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>HubSpot Dark Mode</title>
+  <link rel="stylesheet" href="popup.css">
+  <script src="palette.js" defer></script>
+  <script src="popup.js" defer></script>
+</head>
+<body>
+  <header><span class="moon" aria-hidden="true">☾</span><div><h1>HubSpot Dark Mode</h1><p>A little easier on the eyes.</p></div></header>
+  <fieldset disabled>
+    <legend>Appearance</legend>
+    <label><input type="radio" name="mode" value="system"><span><strong>System</strong><small>Changes with your device</small></span><span class="recommended">AUTO</span></label>
+    <label><input type="radio" name="mode" value="dark"><span><strong>Dark</strong><small>Keep the lights low</small></span></label>
+    <label><input type="radio" name="mode" value="light"><span><strong>Light</strong><small>Use HubSpot’s original theme</small></span></label>
+  </fieldset>
+  <p id="status" role="status" aria-live="polite">Loading your preference…</p>
+  <footer>Works only on HubSpot. Settings stay on this device.</footer>
+</body>
+</html>
