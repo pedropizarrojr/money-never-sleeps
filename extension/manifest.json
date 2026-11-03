@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
   "name": "Money Never Sleeps",
-  "version": "0.3.4",
-  "description": "Dark mode for your GTM stack. HubSpot and LinkedIn, synced with your system appearance.",
+  "version": "0.4.0",
+  "description": "Warm dark mode for HubSpot, LinkedIn, Google Drive, Docs, Sheets and Calendar. Follows your system appearance.",
   "minimum_chrome_version": "119",
   "permissions": [
     "storage"
@@ -61,6 +61,19 @@
       "all_frames": true,
       "world": "ISOLATED",
       "match_origin_as_fallback": true
+    },
+    {
+      "matches": [
+        "https://drive.google.com/*",
+        "https://docs.google.com/document/*",
+        "https://docs.google.com/spreadsheets/*",
+        "https://calendar.google.com/*"
+      ],
+      "css": ["google.css"],
+      "js": ["palette.js", "content.js"],
+      "run_at": "document_start",
+      "all_frames": false,
+      "world": "ISOLATED"
     }
   ],
   "content_security_policy": {

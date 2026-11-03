@@ -12,6 +12,11 @@ label:hover { background: #33302e; border-color: #a49c92; }
 label:has(input:checked) { border-color: #d6b77c; background: #454039; }
 input { margin: 0; accent-color: #d6b77c; width: 16px; height: 16px; }
 input:focus-visible { outline: 2px solid #ecd5a9; outline-offset: 4px; }
+.canvas-option { margin-top: 14px; padding: 10px; gap: 10px; }
+.canvas-option input { flex: 0 0 16px; }
+.canvas-option strong { font-size: 12px; }
+.canvas-option small { font-size: 10px; }
+.canvas-option:has(input:checked) { background: #2d2b28; border-color: #625d57; }
 strong { font-weight: 600; display: block; }
 small { display: block; font-size: 11px; color: #b8b2ac; margin-top: 1px; }
 .recommended { margin-left: auto; font-size: 9px; letter-spacing: .8px; font-weight: 700; color: #ecd5a9; }

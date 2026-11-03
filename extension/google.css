@@ -1,0 +1,175 @@
+/* SPDX-License-Identifier: MIT
+   Google Workspace: static, screen-only rules. No page scans or style observers.
+   Product colors and document data are kept separate from interface colors. */
+@media screen and (prefers-color-scheme: dark) {
+  html:not([data-hsdm-theme]), html:not([data-hsdm-theme]) body {
+    background-color: #262422 !important;
+    color: #e3e0de !important;
+  }
+}
+
+@media screen {
+html[data-hsdm-theme="dark"][data-hsdm-app] {
+  color-scheme: dark !important;
+  background-color: #262422 !important;
+  color: #e3e0de !important;
+  scrollbar-color: #7b756e #262422;
+}
+/* Drive and Calendar define these on body, so root-only overrides don't win.
+   Include RGB variants used by alpha/hover styles. No universal token override. */
+html[data-hsdm-theme="dark"][data-hsdm-app],
+html[data-hsdm-theme="dark"][data-hsdm-app] body {
+  --gm3-sys-color-background: #262422 !important;
+  --gm3-sys-color-background-rgb: 38,36,34 !important;
+  --gm3-sys-color-on-background: #e3e0de !important;
+  --gm3-sys-color-on-background-rgb: 227,224,222 !important;
+  --gm3-sys-color-surface: #2d2b28 !important;
+  --gm3-sys-color-surface-rgb: 45,43,40 !important;
+  --gm3-sys-color-surface-dim: #262422 !important;
+  --gm3-sys-color-surface-dim-rgb: 38,36,34 !important;
+  --gm3-sys-color-surface-bright: #3c3935 !important;
+  --gm3-sys-color-surface-bright-rgb: 60,57,53 !important;
+  --gm3-sys-color-surface-container-lowest: #242220 !important;
+  --gm3-sys-color-surface-container-lowest-rgb: 36,34,32 !important;
+  --gm3-sys-color-surface-container-low: #292724 !important;
+  --gm3-sys-color-surface-container-low-rgb: 41,39,36 !important;
+  --gm3-sys-color-surface-container: #2d2b28 !important;
+  --gm3-sys-color-surface-container-rgb: 45,43,40 !important;
+  --gm3-sys-color-surface-container-high: #33302e !important;
+  --gm3-sys-color-surface-container-high-rgb: 51,48,46 !important;
+  --gm3-sys-color-surface-container-highest: #3c3935 !important;
+  --gm3-sys-color-surface-container-highest-rgb: 60,57,53 !important;
+  --gm3-sys-color-surface-variant: #33302e !important;
+  --gm3-sys-color-surface-variant-rgb: 51,48,46 !important;
+  --gm3-sys-color-on-surface: #e3e0de !important;
+  --gm3-sys-color-on-surface-rgb: 227,224,222 !important;
+  --gm3-sys-color-on-surface-variant: #b8b2ac !important;
+  --gm3-sys-color-on-surface-variant-rgb: 184,178,172 !important;
+  --gm3-sys-color-outline: #938d85 !important;
+  --gm3-sys-color-outline-rgb: 147,141,133 !important;
+  --gm3-sys-color-outline-variant: #625d57 !important;
+  --gm3-sys-color-outline-variant-rgb: 98,93,87 !important;
+  --gm3-sys-color-primary: #d6b77c !important;
+  --gm3-sys-color-primary-rgb: 214,183,124 !important;
+  --gm3-sys-color-on-primary: #262422 !important;
+  --gm3-sys-color-on-primary-rgb: 38,36,34 !important;
+  --gm3-sys-color-primary-container: #51442e !important;
+  --gm3-sys-color-primary-container-rgb: 81,68,46 !important;
+  --gm3-sys-color-on-primary-container: #f0dfbc !important;
+  --gm3-sys-color-on-primary-container-rgb: 240,223,188 !important;
+  --gm3-sys-color-secondary-container: #454039 !important;
+  --gm3-sys-color-secondary: #d6b77c !important;
+  --gm3-sys-color-secondary-rgb: 214,183,124 !important;
+  --gm3-sys-color-on-secondary: #262422 !important;
+  --gm3-sys-color-on-secondary-rgb: 38,36,34 !important;
+  --gm3-sys-color-secondary-container-rgb: 69,64,57 !important;
+  --gm3-sys-color-on-secondary-container: #e3e0de !important;
+  --gm3-sys-color-on-secondary-container-rgb: 227,224,222 !important;
+  --gm3-sys-color-inverse-surface: #e3e0de !important;
+  --gm3-sys-color-inverse-surface-rgb: 227,224,222 !important;
+  --gm3-sys-color-inverse-on-surface: #262422 !important;
+  --gm3-sys-color-inverse-on-surface-rgb: 38,36,34 !important;
+  --gm3-menu-surface-container-color: #33302e !important;
+  --cal-sys-color-scrollbar: #625d57 !important;
+  --cal-sys-color-scrollbar-active: #938d85 !important;
+  --cal-sys-color-helper: #e3e0de !important;
+  --cal-sys-color-helper-variant: #b8b2ac !important;
+  --cal-sys-color-bubble-banner: #33302e !important;
+  background-color: #262422 !important;
+  color: #e3e0de !important;
+}
+html[data-hsdm-theme="dark"][data-hsdm-app] :is([role="banner"], [role="navigation"], [role="complementary"]) {
+  background-color: #262422 !important;
+  color: #e3e0de !important;
+}
+html[data-hsdm-theme="dark"][data-hsdm-app] :is([role="dialog"], [role="menu"], [role="listbox"], .goog-menu, .modal-dialog, .docs-dialog, .docs-material-gm-dialog) {
+  background-color: #33302e !important;
+  color: #e3e0de !important;
+  border-color: #625d57 !important;
+}
+html[data-hsdm-theme="dark"][data-hsdm-app] :is(.goog-menuitem, .goog-menuitem-content, .goog-submenu-arrow, .modal-dialog-title, .modal-dialog-content, .modal-dialog-buttons) {
+  color: #e3e0de !important;
+  background-color: transparent !important;
+}
+html[data-hsdm-theme="dark"][data-hsdm-app] :is(.goog-menuitem-highlight, .goog-menuitem-hover, .goog-option-selected) {
+  background-color: #454039 !important;
+}
+html[data-hsdm-theme="dark"][data-hsdm-app] :is(.goog-menuseparator, [role="separator"]) {
+  border-color: #625d57 !important;
+}
+html[data-hsdm-theme="dark"][data-hsdm-app] :is(input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="color"]), textarea, select) {
+  background-color: #242220 !important;
+  color: #e3e0de !important;
+  border-color: #938d85 !important;
+  caret-color: #f0dfbc !important;
+}
+html[data-hsdm-theme="dark"][data-hsdm-app] ::placeholder { color: #b8b2ac !important; opacity: 1; }
+html[data-hsdm-theme="dark"][data-hsdm-app] :focus-visible { outline: 2px solid #d6b77c !important; outline-offset: 2px; }
+html[data-hsdm-theme="dark"][data-hsdm-app] ::selection { background-color: #62533b !important; color: #f0ece7 !important; }
+
+/* Drive: file thumbnails and type icons retain their source colors. */
+html[data-hsdm-theme="dark"][data-hsdm-app="drive"] :is([role="main"], [role="grid"]) {
+  background-color: #2d2b28 !important;
+  color: #e3e0de !important;
+}
+html[data-hsdm-theme="dark"][data-hsdm-app="drive"] :is([role="columnheader"], [role="gridcell"]) {
+  border-color: #625d57 !important;
+}
+html[data-hsdm-theme="dark"][data-hsdm-app="drive"] [role="row"][aria-selected="true"] {
+  background-color: #454039 !important;
+  color: #f0dfbc !important;
+}
+
+/* Docs/Sheets share the Closure toolbars. These selectors avoid document text,
+   color swatches, previews, avatars and the collaborative selection overlays. */
+html[data-hsdm-theme="dark"][data-hsdm-app] :is(#docs-chrome, #docs-editor, .docs-titlebar, .docs-menubar, .docs-menubar-background, .docs-companion-app-switcher-container, .docs-homescreen-container, .docs-homescreen-item-container) {
+  background-color: #262422 !important;
+  color: #e3e0de !important;
+}
+html[data-hsdm-theme="dark"][data-hsdm-app] :is(#docs-toolbar-wrapper, .docs-toolbar, .docs-sheet-tab, .docs-sheet-tab-name, .docs-sheet-status, .docs-sheet-container, .docs-ruler, .kix-ruler, .kix-ruler-background, .left-sidebar-container, .docs-vertical-ruler, .docos-anchoredcommentview, .docos-replyview, .docos-input, .docos-input-textarea, .docs-homescreen-grid-item) {
+  background-color: #2d2b28 !important;
+  color: #e3e0de !important;
+  border-color: #625d57 !important;
+}
+html[data-hsdm-theme="dark"][data-hsdm-app] :is(.goog-toolbar-button, .goog-toolbar-menu-button, .goog-toolbar-combo-button, .goog-toolbar-combo-button-input, .goog-toolbar-menu-button-caption, .goog-toolbar-combo-button-caption, .goog-menuitem, .docs-menubar .goog-control, .docs-title-input, .docs-title-input-label, .docs-title-input-label-inner, .docs-sheet-tab-name, .docs-outline-tile, .outline-text, .navigation-item, .location-indicator-content) {
+  color: #e3e0de !important;
+}
+html[data-hsdm-theme="dark"][data-hsdm-app] :is(.goog-toolbar-button-hover, .goog-toolbar-menu-button-hover, .goog-toolbar-button-checked, .goog-toolbar-menu-button-open, .docs-sheet-active-tab, .docs-sheet-active-tab .docs-sheet-tab-name) {
+  background-color: #454039 !important;
+  border-color: #938d85 !important;
+}
+html[data-hsdm-theme="dark"][data-hsdm-app] :is(.goog-menuitem-disabled, .goog-toolbar-button-disabled, .goog-toolbar-menu-button-disabled) { opacity: .5; }
+/* Monochrome sprite artwork needs a local filter; brand/color-picker art does not. */
+html[data-hsdm-theme="dark"][data-hsdm-app] :is(.goog-toolbar-button, .goog-toolbar-menu-button, .goog-menuitem) .docs-icon-img {
+  filter: invert(.86) hue-rotate(180deg) !important;
+}
+html[data-hsdm-theme="dark"][data-hsdm-app="docs"] .kix-page-paginated {
+  background-color: #fff !important;
+  border-color: #625d57 !important;
+  box-shadow: 0 0 0 1px #625d57 !important;
+}
+html[data-hsdm-theme="dark"][data-hsdm-app="docs"][data-hsdm-canvas="dark"] .kix-page-paginated { background-color: #2d2b28 !important; }
+html[data-hsdm-theme="dark"][data-hsdm-app="docs"][data-hsdm-canvas="dark"] .kix-canvas-tile-content {
+  filter: invert(.86) hue-rotate(180deg) sepia(.08) !important;
+}
+html[data-hsdm-theme="dark"][data-hsdm-app="sheets"] :is(.cell-input, .formula-content, #t-formula-bar-input, .input-box, .waffle-name-box) {
+  background-color: #242220 !important;
+  color: #e3e0de !important;
+  border-color: #625d57 !important;
+}
+/* Sheets paints cells, headings and grid lines in one canvas. The filter is
+   confined to the grid and is user-switchable; no canvas pixels are read. */
+html[data-hsdm-theme="dark"][data-hsdm-app="sheets"] .grid-container { background-color: #fff !important; }
+html[data-hsdm-theme="dark"][data-hsdm-app="sheets"][data-hsdm-canvas="dark"] .grid-container {
+  filter: invert(.86) hue-rotate(180deg) sepia(.08) !important;
+}
+/* An editor inside the filtered grid must start with light source colors,
+   otherwise it would be darkened once by these rules and inverted a second time. */
+html[data-hsdm-theme="dark"][data-hsdm-app="sheets"][data-hsdm-canvas="dark"] .grid-container :is(input, textarea, .cell-input, [contenteditable="true"]) {
+  background-color: #fff !important;
+  color: #1f1f1f !important;
+  caret-color: #1f1f1f !important;
+}
+/* Calendar's event fill/text tokens and inline calendar colors are untouched. */
+html[data-hsdm-theme="dark"][data-hsdm-app="calendar"] [role="main"] { background-color: #2d2b28 !important; }
+}
