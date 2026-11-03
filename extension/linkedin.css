@@ -13,7 +13,8 @@
     caret-color: #e2e8f0 !important;
   }
   /* Only interface icon roots inherit text color. Photos and inline artwork keep their fills. */
-  html[data-hsdm-theme="dark"] :is(button, nav, [role="navigation"]) svg {
+  html[data-hsdm-theme="dark"] :is(button, a, nav, [role="button"], [role="navigation"]) svg[fill="currentColor"] {
+    color: inherit !important;
     fill: currentColor;
   }
 }
