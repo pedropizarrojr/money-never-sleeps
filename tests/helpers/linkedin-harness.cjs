@@ -37,6 +37,7 @@ function harness(count = 3, { source, readCost = 0.02 } = {}) {
   function shadow(host){const tree={nodeType:11,host,isConnected:true,children:[],querySelectorAll:root.querySelectorAll,append:root.append};host.shadowRoot=tree;return tree;}
   const style=(tree=doc)=>sheets.find(s=>s.isConnected&&s.ownerRoot===tree)||sheets.find(s=>s.ownerRoot===tree);
   return {engine:context.HSDMEngine,root,node,doc,frames,drain,step,shadow,tick:()=>interval?.(),stats,
+    resources:()=>({interval:!!interval,observers:callbacks.size,pending:frames.size+microtasks.length}),
     flushMicrotasks,pending:()=>frames.size+microtasks.length,style,
     css:(tree=doc)=>{const s=style(tree);return (s?.textContent||'')+(s?.sheet.cssRules.map(r=>r.cssText).join('')||'');},
     mutate:(records,target=root)=>callbacks.get(target)?.(records)};
