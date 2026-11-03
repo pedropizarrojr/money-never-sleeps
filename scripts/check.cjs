@@ -6,12 +6,15 @@ const manifest = JSON.parse(fs.readFileSync('extension/manifest.json'));
 assert.equal(manifest.manifest_version, 3);
 assert.deepEqual(manifest.permissions, ['storage']);
 assert.equal(manifest.host_permissions, undefined);
-assert.equal(manifest.content_scripts[0].run_at, 'document_start');
-assert.equal(manifest.content_scripts[0].all_frames, true);
-for (const match of manifest.content_scripts[0].matches) {
-  const host = new URL(match).hostname;
-  assert.match(host, /^app(?:-[a-z]+\d)?\.hubspot\.com$/);
-  assert.equal(host.includes('*'), false, 'Host wildcards must follow Chrome match-pattern syntax');
+assert.equal(manifest.content_scripts.length, 2);
+for (const script of manifest.content_scripts) {
+  assert.equal(script.run_at, 'document_start');
+  assert.equal(script.all_frames, true);
+  for (const match of script.matches) {
+    const host = new URL(match).hostname;
+    assert.match(host, /^(?:app(?:-[a-z]+\d)?\.hubspot\.com|(?:www\.)?linkedin\.com)$/);
+    assert.equal(host.includes('*'), false, 'Host wildcards must follow Chrome match-pattern syntax');
+  }
 }
 const required = [manifest.action.default_popup, ...Object.values(manifest.icons),
   ...manifest.content_scripts.flatMap(s => [...s.js,...s.css])];
