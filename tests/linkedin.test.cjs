@@ -1,51 +1,13 @@
 const { test } = require('node:test');
 const assert = require('node:assert/strict');
-const vm = require('node:vm');
-const fs = require('node:fs');
-
-function harness(count = 3) {
-  let serial = 0, interval;
-  const frames = new Map(), callbacks = new Map(), sheets = [], microtasks = [];
-  let doc;
-  function node(tag = 'DIV', colors = {}) {
-    return {nodeType:1,tagName:tag,isConnected:true,attrs:{},children:[],colors:{color:'rgba(0, 0, 0, 0.9)','background-color':'rgb(255, 255, 255)',...colors},
-      querySelectorAll() {return this.children.flatMap(child=>[child,...child.querySelectorAll('*')]);},
-      closest(selector) {if(selector.includes('data-hsdm-owned')&&this.dataset?.hsdmOwned)return this;
-        return selector.split(',').map(s=>s.trim().toUpperCase()).includes(this.tagName) ? this : null;},
-      getRootNode(){return this.ownerRoot || doc;},
-      getAttribute(key){return this.attrs[key] ?? null;},
-      setAttribute(key,value){this.attrs[key]=value;},removeAttribute(key){delete this.attrs[key];},
-      remove(){this.isConnected=false;},append(child){this.children.push(child);child.ownerRoot=this.nodeType===11?this:doc;if(child.tagName==='STYLE')sheets.push(child);}};
-  }
-  const root=node('HTML'),head=node('HEAD');
-  root.children = Array.from({length:count},()=>node());
-  doc={documentElement:root,head,hidden:false,styleSheets:[],
-    getElementById(id){return root.querySelectorAll('*').find(n=>n.id===id);},
-    createElement:()=>({...node('STYLE'),dataset:{},textContent:'',disabled:false}),
-    addEventListener(){},removeEventListener(){}};
-  const context=vm.createContext({document:doc,
-    getComputedStyle(element){assert.ok(sheets.filter(s=>s.isConnected).every(s=>s.disabled),'Read original colors with all generated sheets disabled');return {getPropertyValue(key){return key.endsWith('-width')?'0px':element.colors[key]||'none';}};},
-    MutationObserver:class{constructor(fn){this.fn=fn;}observe(target){callbacks.set(target,this.fn);}disconnect(){}},
-    requestAnimationFrame(fn){const id=++serial;frames.set(id,fn);return id;},cancelAnimationFrame(id){frames.delete(id);},
-    setInterval(fn){interval=fn;return 1;},clearInterval(){interval=null;},queueMicrotask(fn){microtasks.push(fn);}
-  });
-  vm.runInContext(fs.readFileSync('extension/palette.js','utf8'),context);
-  vm.runInContext(fs.readFileSync('extension/linkedin.js','utf8'),context);
-  function flushMicrotasks(){while(microtasks.length)microtasks.shift()();}
-  function drain(){let guard=0;while(frames.size||microtasks.length){assert.ok(++guard<50,'Work settles');flushMicrotasks();if(frames.size){const [id,fn]=frames.entries().next().value;frames.delete(id);fn();}}}
-  function shadow(host){const tree={nodeType:11,host,isConnected:true,children:[],querySelectorAll:root.querySelectorAll,append:root.append};host.shadowRoot=tree;return tree;}
-  return {engine:context.HSDMEngine,root,node,doc,frames,drain,shadow,tick:()=>interval?.(),
-    flushMicrotasks,pending:()=>frames.size+microtasks.length,
-    style:(tree=doc)=>sheets.find(s=>s.isConnected&&s.ownerRoot===tree)||sheets.find(s=>s.ownerRoot===tree),
-    mutate:(records,target=root)=>callbacks.get(target)(records)};
-}
+const { harness } = require('./helpers/linkedin-harness.cjs');
 
 test('LinkedIn opaque classes are themed from colors without CSSOM or content access',()=>{
   const h=harness();h.root.children[0].className='opaque-x123';
   h.engine.start();h.drain();
-  assert.match(h.style().textContent,/background-color:hsl/);
-  assert.match(h.style().textContent,/color:hsl/);
-  assert.match(h.style().textContent,/^@media screen/);
+  assert.match(h.css(),/background-color:hsl/);
+  assert.match(h.css(),/color:hsl/);
+  assert.match(h.css(),/^@media screen/);
   assert.ok(h.root.children[0].attrs['data-hsdm-li']);
   assert.equal(h.style().disabled,false);
 });
@@ -56,21 +18,20 @@ test('large feeds are split across frames and newly added cards are themed',()=>
   h.mutate([{target:h.root,type:'childList',addedNodes:[added],removedNodes:[]}]);h.drain();
   assert.ok(added.attrs['data-hsdm-li']);
 });
-test('class changes re-read original colors and removed elements are pruned',()=>{
-  const h=harness();h.engine.start();h.drain();const child=h.root.children[0];
-  child.colors['background-color']='rgb(240, 240, 240)';
-  h.mutate([{target:child,type:'attributes'}]);h.drain();assert.match(h.style().textContent,/17\.3%/);
-  const id=child.attrs['data-hsdm-li'];child.isConnected=false;
-  h.mutate([{target:h.root,type:'childList',addedNodes:[],removedNodes:[child]}]);h.drain();
-  assert.ok(!h.style().textContent.includes(`[data-hsdm-li="${id}"]`));
+test('class changes and removals do not trigger another document scan',()=>{
+  const h=harness(1000);h.engine.start();h.drain();const reads=h.stats.reads;
+  const child=h.root.children[0];child.isConnected=false;
+  h.mutate([{target:child,type:'attributes',attributeName:'class'}]);
+  h.mutate([{target:h.root,type:'childList',addedNodes:[],removedNodes:[child]}]);
+  h.drain();assert.equal(h.stats.reads,reads);
 });
 test('native dark surfaces stay dark and media elements are excluded',()=>{
   const h=harness();const child=h.root.children[0];child.colors={color:'rgb(240, 240, 240)','background-color':'rgb(27, 31, 35)'};
   const image=h.node('IMG');h.root.children.push(image);h.engine.start();h.drain();
-  assert.ok(child.attrs['data-hsdm-li']);assert.match(h.style().textContent,/hsl\(30 6%/);assert.equal(image.attrs['data-hsdm-li'],undefined);
+  assert.ok(child.attrs['data-hsdm-li']);assert.match(h.css(),/hsl\(30 6%/);assert.equal(image.attrs['data-hsdm-li'],undefined);
 });
 test('switching back to original removes styles and cancels pending scans',()=>{
-  const h=harness();h.engine.start();h.drain();h.engine.refresh();assert.ok(h.pending());
+  const h=harness();h.engine.start();h.drain();const card=h.node();h.root.append(card);h.mutate([{target:h.root,type:'childList',addedNodes:[card],removedNodes:[]}]);assert.ok(h.pending());
   h.engine.stop();h.drain();assert.equal(h.style().isConnected,false);assert.equal(h.frames.size,0);
   assert.equal(h.root.children[0].attrs['data-hsdm-li'],undefined);
 });
@@ -79,10 +40,10 @@ test('chat shadow roots get their own dark stylesheet, including headers and com
   const tree=h.shadow(host);const chat=h.node();tree.append(chat);
   h.engine.start();h.drain();
   const style=h.style(tree);assert.ok(style);
-  assert.match(style.textContent,/:host-context\(html\[data-hsdm-theme="dark"\]\)/);
-  assert.match(style.textContent,/msg-overlay-conversation-bubble-header/);
-  assert.match(style.textContent,/msg-form__contenteditable/);
-  assert.match(style.textContent,/background:#33302e/);
+  assert.match(h.css(tree),/:host-context\(html\[data-hsdm-theme="dark"\]\)/);
+  assert.match(h.css(tree),/msg-overlay-conversation-bubble-header/);
+  assert.match(h.css(tree),/msg-form__contenteditable/);
+  assert.match(h.css(tree),/background:#33302e/);
   assert.ok(chat.attrs['data-hsdm-li']);
   h.engine.stop();assert.equal(style.isConnected,false);
   assert.equal(chat.attrs['data-hsdm-li'],undefined);
@@ -97,40 +58,26 @@ test('late-attached chat roots and messages inserted inside them are discovered'
   host.isConnected=false;h.engine.refresh();h.drain();
   assert.equal(h.style(tree).isConnected,false);
 });
-test('newly inserted cards receive their first dark pass before an animation frame',()=>{
-  const h=harness();h.engine.start();h.drain();const card=h.node();h.root.children.push(card);
+test('new cards are scheduled in a frame rather than blocking page microtasks',()=>{
+  const h=harness();h.engine.start();h.drain();const card=h.node();h.root.append(card);
+  const reads=h.stats.reads;
   h.mutate([{target:h.root,type:'childList',addedNodes:[card],removedNodes:[]}]);
-  assert.equal(h.frames.size,0);h.flushMicrotasks();
-  assert.ok(card.attrs['data-hsdm-li']);
-  assert.match(h.style().textContent,/background-color:hsl/);
+  h.flushMicrotasks();assert.equal(h.stats.reads,reads);assert.equal(h.frames.size,1);
+  h.drain();assert.ok(card.attrs['data-hsdm-li']);
 });
 test('messaging header symbols without fill attributes get explicit white fills',()=>{
   const h=harness();const tree=h.shadow(h.root.children[0]);tree.append(h.node());
   h.engine.start();h.drain();
-  assert.match(h.style(tree).textContent,/msg-overlay-bubble-header__controls button/);
-  assert.match(h.style(tree).textContent,/:is\(svg,li-icon\)\{color:#fff !important;fill:#fff !important;/);
-  assert.match(h.style(tree).textContent,/svg :is\(use,path\)\{fill:inherit !important;/);
+  assert.match(h.css(tree),/msg-overlay-bubble-header__controls button/);
+  assert.match(h.css(tree),/:is\(svg,li-icon\)\{color:#fff !important;fill:#fff !important;/);
+  assert.match(h.css(tree),/svg :is\(use,path\)\{fill:inherit !important;/);
 });
 
-test('late CSS-in-JS rules restyle existing labels, while unchanged sheets do no work',()=>{
-  const h=harness();const label=h.root.children[0];
-  label.colors={color:'rgb(255, 255, 255)'};
+test('stylesheet churn does not restart computed-style scans',()=>{
+  const h=harness(1000);h.engine.start();h.drain();const reads=h.stats.reads;
   const sheet={cssRules:[],disabled:false};h.doc.styleSheets.push(sheet);
-  h.engine.start();h.drain();assert.equal(label.attrs['data-hsdm-li'],undefined);
-  h.tick();assert.equal(h.pending(),0);
-  label.colors.color='rgba(0, 0, 0, 0.75)';sheet.cssRules.push({});
-  h.tick();h.drain();assert.ok(label.attrs['data-hsdm-li']);
-  assert.match(h.style().textContent,/90\.0% \/ 0\.750/);
-  h.tick();assert.equal(h.pending(),0);
-});
-
-test('page style text changes trigger a rescan but owned style changes do not',()=>{
-  const h=harness();h.engine.start();h.drain();
-  const style=h.node('STYLE');style.matches=selector=>selector.includes('style');
-  h.mutate([{target:style,type:'childList',addedNodes:[],removedNodes:[]}]);
-  assert.ok(h.pending());h.drain();
-  h.mutate([{target:h.style(),type:'childList',addedNodes:[],removedNodes:[]}]);
-  assert.equal(h.pending(),0);
+  for(let i=0;i<20;i++){sheet.cssRules.push({});h.tick();h.drain();}
+  assert.equal(h.stats.reads,reads);
 });
 
 test('hydration marker removal is repaired without reacting to the engine own writes',()=>{
@@ -140,4 +87,30 @@ test('hydration marker removal is repaired without reacting to the engine own wr
   h.drain();assert.equal(label.attrs['data-hsdm-li'],id);
   h.mutate([{target:label,type:'attributes',attributeName:'data-hsdm-li'}]);
   assert.equal(h.pending(),0);
+});
+
+test('color reads are batched before DOM writes and equivalent styles share one rule',()=>{
+  const h=harness(1000);h.engine.start();h.drain();
+  assert.equal(h.stats.readAfterWrite,0);
+  assert.equal(h.stats.ruleWrites,1);
+  assert.equal(h.stats.bulkScans,0);
+});
+
+test('a single added element only reads that element and reuses the existing rule',()=>{
+  const h=harness(1000);h.engine.start();h.drain();
+  const before={...h.stats},card=h.node();h.root.append(card);
+  h.mutate([{target:h.root,type:'childList',addedNodes:[card],removedNodes:[]}]);h.drain();
+  assert.equal(h.stats.reads-before.reads,1);
+  assert.equal(h.stats.ruleWrites-before.ruleWrites,0);
+  assert.equal(h.stats.textWrites-before.textWrites,0);
+});
+
+test('each frame and total enhancement work are bounded on a large document',()=>{
+  const h=harness(20000,{readCost:0.5});h.engine.start();h.step();
+  assert.ok(h.stats.reads<=6,'3 ms slice at simulated 0.5 ms per style read');
+  h.drain();assert.ok(h.stats.reads<=200,'100 ms document work budget');
+  const reads=h.stats.reads;h.engine.refresh();h.tick();h.drain();
+  assert.equal(h.stats.reads,reads,'refresh does not reset the budget');
+  const host=h.root.children[0];host.id='interop-outlet';const tree=h.shadow(host);
+  h.tick();h.drain();assert.ok(h.style(tree),'chat static CSS still installs after the budget');
 });
