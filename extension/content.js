@@ -11,6 +11,15 @@
   // Google uses static CSS only. No engine, DOM traversal or polling is started.
   const engine = globalThis.HSDMEngine;
   let mode = "system", darkGoogleCanvas = true, modeRevision = 0, canvasRevision = 0;
+  let settingsReady = false, engineRunning = false, systemListening = false;
+
+  function watchSystem() {
+    const listen = mode === "system";
+    if (listen === systemListening) return;
+    systemListening = listen;
+    if (listen) system.addEventListener("change", apply);
+    else system.removeEventListener("change", apply);
+  }
 
   function attribute(root, name, value) {
     if (root.getAttribute(name) !== value) root.setAttribute(name, value);
@@ -26,8 +35,13 @@
     }
     attribute(root, "data-hsdm-theme", dark ? "dark" : "light");
     attribute(root, "data-hsdm-mode", mode);
-    if (dark) engine?.start();
-    else engine?.stop();
+    // Honor a saved Light override before starting any expensive theme work.
+    // Only transitions start/stop the engine, never a routine tab activation.
+    if (settingsReady && engine && dark !== engineRunning) {
+      engineRunning = dark;
+      if (dark) engine.start();
+      else engine.stop();
+    }
   }
 
   if (document.documentElement) apply();
@@ -39,15 +53,20 @@
   }
 
   // Every open tab and permitted frame observes the OS/browser preference live.
-  system.addEventListener("change", apply);
+  watchSystem();
   document.addEventListener("visibilitychange", () => {
-    if (!document.hidden) { apply(); engine?.refresh(); }
+    if (document.hidden) return;
+    if (mode === "system") apply();
+    if (engineRunning) engine.refresh();
   });
-  window.addEventListener("pageshow", apply);
+  window.addEventListener("pageshow", () => { if (mode === "system" || engineRunning) apply(); });
 
   chrome.storage.onChanged.addListener((changes, area) => {
     if (area !== "local" || (!changes.mode && !changes.darkGoogleCanvas)) return;
-    if (changes.mode) { modeRevision++; mode = normalizeMode(changes.mode.newValue); }
+    if (changes.mode) {
+      modeRevision++; mode = normalizeMode(changes.mode.newValue);
+      settingsReady = true; watchSystem();
+    }
     if (changes.darkGoogleCanvas) {
       canvasRevision++;
       darkGoogleCanvas = changes.darkGoogleCanvas.newValue !== false;
@@ -60,6 +79,11 @@
     // A slow initial read must not overwrite a newer change from the popup.
     if (modeRevision === initialModeRevision) mode = normalizeMode(settings.mode);
     if (canvasRevision === initialCanvasRevision) darkGoogleCanvas = settings.darkGoogleCanvas !== false;
+    settingsReady = true;
+    watchSystem();
     apply();
-  }).catch(() => { /* Keep system mode if storage is temporarily unavailable. */ });
+  }).catch(() => {
+    settingsReady = true;
+    apply(); // Keep system mode if storage is temporarily unavailable.
+  });
 })();

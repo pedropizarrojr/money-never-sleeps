@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Money Never Sleeps",
-  "version": "0.4.0",
+  "version": "0.4.1",
   "description": "Warm dark mode for HubSpot, LinkedIn, Google Drive, Docs, Sheets and Calendar. Follows your system appearance.",
   "minimum_chrome_version": "119",
   "permissions": [

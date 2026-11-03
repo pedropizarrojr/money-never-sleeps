@@ -8,8 +8,7 @@
   let lastSheetState = [];
   let inlineId = 0;
   let tokenCss = "", tokensDirty = true;
-  const cache = new WeakMap();
-  const inlineValues = new WeakMap();
+  let cache = new WeakMap(), inlineValues = new WeakMap();
 
   function sheetState() {
     const result = [];
@@ -202,6 +201,7 @@
   }
 
   function stop() {
+    if (!active) return;
     active = false;
     epoch++;
     observer?.disconnect();
@@ -214,6 +214,10 @@
     style?.remove();
     style = null;
     document.querySelectorAll("[data-hsdm-inline]").forEach((element) => element.removeAttribute("data-hsdm-inline"));
+    observer = null; timer = null;
+    lastSheetState = []; tokenCss = ""; tokensDirty = true;
+    cache = new WeakMap(); inlineValues = new WeakMap();
+    inlineId = 0; lastRefresh = -Infinity;
   }
 
   scope.HSDMEngine = Object.freeze({ start, stop, refresh: schedule });

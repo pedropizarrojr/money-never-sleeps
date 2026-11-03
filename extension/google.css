@@ -152,7 +152,7 @@ html[data-hsdm-theme="dark"][data-hsdm-app="docs"][data-hsdm-canvas="dark"] .kix
 html[data-hsdm-theme="dark"][data-hsdm-app="docs"][data-hsdm-canvas="dark"] .kix-canvas-tile-content {
   filter: invert(.86) hue-rotate(180deg) sepia(.08) !important;
 }
-html[data-hsdm-theme="dark"][data-hsdm-app="sheets"] :is(.cell-input, .formula-content, #t-formula-bar-input, .input-box, .waffle-name-box) {
+html[data-hsdm-theme="dark"][data-hsdm-app="sheets"] :is(.cell-input, .formula-content, #t-formula-bar-input, #formula-bar, #formula-bar-name-box-wrapper, #formula-bar-container, .input-box, .waffle-name-box) {
   background-color: #242220 !important;
   color: #e3e0de !important;
   border-color: #625d57 !important;

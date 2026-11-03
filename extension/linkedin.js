@@ -187,10 +187,12 @@ ${buttons} svg [stroke]:not([stroke="none"]){stroke:#fff !important;}`;
   }
 
   function stop() {
+    if (!active) return;
     active = false;
     clearInterval(timer);
+    timer = null;
     if (frame !== null) cancelAnimationFrame(frame);
-    frame = null;
+    frame = null; serial = 0; usedMs = 0;
     for (const context of contexts.values()) {
       context.observer?.disconnect(); context.style.remove();
       context.root.querySelectorAll("[data-hsdm-li]").forEach(element => element.removeAttribute("data-hsdm-li"));
