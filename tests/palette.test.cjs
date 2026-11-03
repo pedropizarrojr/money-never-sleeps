@@ -16,7 +16,7 @@ test('color parser supports alpha, short hex and percentage channels', () => {
   assert.equal(p.parseColor('var(--anything)'), null);
 });
 test('backgrounds darken, text brightens, and transparent fills stay transparent', () => {
-  assert.match(p.transformValue('background-color', '#fff'), /17\.0%/);
+  assert.match(p.transformValue('background-color', '#fff'), /16\.0%/);
   assert.match(p.transformValue('color', '#333'), /85\.6%/);
   assert.equal(p.transformValue('background', 'rgba(255,255,255,0)'), 'rgba(255,255,255,0)');
 });
@@ -32,7 +32,7 @@ test('primary text tokens transform while foreground on colored actions is prese
   assert.equal(p.transformValue('--t-ui-color-fg-onBlue-default', '#333'), '#333');
 });
 test('status fills and already dark navigation keep their colors', () => {
-  assert.equal(p.transformValue('background-color', '#333'), '#333');
+  assert.match(p.transformValue('background-color', '#333'), /hsl\(30 6% 20\.0%/);
   assert.equal(p.transformValue('background-color', '#008000'), '#008000');
 });
 test('neutral gradient fades and bright shadows darken without changing image URLs', () => {
@@ -40,4 +40,8 @@ test('neutral gradient fades and bright shadows darken without changing image UR
   assert.notEqual(p.transformValue('background-image',gradient),gradient);
   assert.equal(p.transformValue('background-image','url("white.png")'),'url("white.png")');
   assert.notEqual(p.transformValue('box-shadow','0 0 8px #fff'),'0 0 8px #fff');
+});
+test('low-opacity neutral dividers become visible warm gray',()=>{
+  assert.match(p.transformValue('border-bottom-color','rgba(0, 0, 0, 0.08)'),/38\.0% \/ 0\.750/);
+  assert.equal(p.transformValue('border-bottom-color','rgba(0, 0, 0, 0)'),'rgba(0, 0, 0, 0)');
 });
