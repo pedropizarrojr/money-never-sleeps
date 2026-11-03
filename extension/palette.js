@@ -2,6 +2,10 @@
 (function (scope) {
   "use strict";
   const MODES = ["system", "dark", "light"];
+  const THEME = Object.freeze({
+    page: "#202631", surface: "#283240", raised: "#344153", input: "#252e3b",
+    text: "#dce4ef", muted: "#abb8c9", controlBorder: "#8796aa", focus: "#93c5fd"
+  });
   const normalizeMode = (mode) => MODES.includes(mode) ? mode : "system";
   const isDark = (mode, systemDark) => normalizeMode(mode) === "dark" ||
     (normalizeMode(mode) === "system" && systemDark);
@@ -60,9 +64,14 @@
     let [h, s, l] = toHsl(rgba);
     const neutral = Math.max(...rgba.slice(0, 3)) - Math.min(...rgba.slice(0, 3)) < 28;
     if (role === "background") {
+      // Lift opaque near-black UI surfaces into charcoal. Keep translucent
+      // backdrops and saturated fills unchanged; media pixels are never read.
+      if (neutral && l < 0.10 && rgba[3] >= 0.95) {
+        return `hsl(216 19% 17% / ${rgba[3].toFixed(3)})`;
+      }
       // Leave saturated status fills and already-dark chrome alone.
       if (l < 0.52) return value;
-      l = neutral ? 0.115 + (1 - l) * 0.22 : 0.16 + (1 - l) * 0.24;
+      l = neutral ? 0.17 + (1 - l) * 0.22 : 0.20 + (1 - l) * 0.20;
       if (neutral) { h = 216; s = 0.19; } else { s = Math.min(s, 0.45); }
     } else if (role === "foreground") {
       if (l > 0.72) return value;
@@ -83,7 +92,7 @@
       (color) => transformColor(color, role));
   }
 
-  const api = Object.freeze({ MODES, normalizeMode, isDark, parseColor, roleFor, transformColor, transformValue });
+  const api = Object.freeze({ MODES, THEME, normalizeMode, isDark, parseColor, roleFor, transformColor, transformValue });
   scope.HSDMPalette = api;
   if (typeof module !== "undefined") module.exports = api;
 })(globalThis);
