@@ -3,44 +3,44 @@
    Generated CSS handles HubSpot's actual loaded selectors and theme tokens. */
 @media screen and (prefers-color-scheme: dark) {
   html:not([data-hsdm-theme]), html:not([data-hsdm-theme]) body {
-    background-color: #202631 !important;
-    color: #dce4ef !important;
+    background-color: #262422 !important;
+    color: #e3e0de !important;
   }
 }
 @media screen {
 html[data-hsdm-theme="dark"] {
   color-scheme: dark !important;
-  background-color: #202631 !important;
-  color: #dce4ef !important;
-  scrollbar-color: #586475 #202631;
+  background-color: #262422 !important;
+  color: #e3e0de !important;
+  scrollbar-color: #7b756e #262422;
 }
 html[data-hsdm-theme="dark"] body {
-  background-color: #202631 !important;
-  color: #dce4ef !important;
+  background-color: #262422 !important;
+  color: #e3e0de !important;
 }
 html[data-hsdm-theme="dark"] :is(#crm, .page, [class*="PageContainer"], [class*="BoardWrapper"]) {
-  background-color: #202631 !important;
-  color: #dce4ef !important;
+  background-color: #262422 !important;
+  color: #e3e0de !important;
 }
 html[data-hsdm-theme="dark"] :is([class*="CardWrapper__Outer"], [class*="UICard"], [class*="UIPanel"], [class*="UIOverlay"], [class*="UIPopover"], [role="dialog"], [role="menu"], [role="listbox"]) {
-  background-color: #283240 !important;
-  color: #dce4ef !important;
-  border-color: #404b5a !important;
+  background-color: #2d2b28 !important;
+  color: #e3e0de !important;
+  border-color: #625d57 !important;
 }
 html[data-hsdm-theme="dark"] :is(input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="color"]), textarea, select) {
-  background-color: #252e3b !important;
-  color: #dce4ef !important;
-  border-color: #8796aa !important;
+  background-color: #242220 !important;
+  color: #e3e0de !important;
+  border-color: #938d85 !important;
 }
-html[data-hsdm-theme="dark"] ::placeholder { color: #abb8c9 !important; opacity: 1; }
-html[data-hsdm-theme="dark"] :focus-visible { outline: 2px solid #93c5fd !important; outline-offset: 2px; }
-html[data-hsdm-theme="dark"] ::selection { background: #235674 !important; color: #eef3f9 !important; }
+html[data-hsdm-theme="dark"] ::placeholder { color: #b8b2ac !important; opacity: 1; }
+html[data-hsdm-theme="dark"] :focus-visible { outline: 2px solid #d6b77c !important; outline-offset: 2px; }
+html[data-hsdm-theme="dark"] ::selection { background: #62533b !important; color: #f0ece7 !important; }
 /* Elevation is expressed with lighter surfaces, rather than bright shadows. */
 html[data-hsdm-theme="dark"] :is([role="dialog"], [role="menu"], [role="listbox"], dialog, [class*="UIPopover"]) {
-  background-color: #344153 !important;
-  color: #dce4ef !important;
+  background-color: #33302e !important;
+  color: #e3e0de !important;
 }
 html[data-hsdm-theme="dark"] :is(input[type="checkbox"], input[type="radio"]) {
-  accent-color: #93c5fd !important;
+  accent-color: #d6b77c !important;
 }
 }

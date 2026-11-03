@@ -1,18 +1,49 @@
 /* SPDX-License-Identifier: MIT */
 (function (scope) {
   "use strict";
-  const { transformValue } = scope.HSDMPalette;
+  const { transformValue, THEME } = scope.HSDMPalette;
   const prefix = 'html[data-hsdm-theme="dark"]';
   const skip = 'script,style,link,meta,head,img,picture,video,audio,canvas,source,track,svg,svg *,video *,[data-hsdm-preserve]';
   const properties = ["color", "background-color", "background-image", "border-top-color", "border-right-color", "border-bottom-color", "border-left-color", "box-shadow"];
-  let active = false, style = null, observer = null, frame = null, serial = 0;
+  let active = false, frame = null, timer = null, serial = 0;
   let queue = [], offset = 0;
-  const dirty = new Set(), records = new Map();
+  const dirty = new Set(), records = new Map(), contexts = new Map();
 
   function enqueue(root) {
-    if (!active || !root || root.nodeType !== 1 || root.closest?.(skip)) return;
+    if (!active || !root || ![1, 11].includes(root.nodeType) || root.closest?.(skip)) return;
     dirty.add(root);
     if (frame === null) frame = requestAnimationFrame(flush);
+  }
+
+  function register(root) {
+    if (contexts.has(root)) return contexts.get(root);
+    const shadow = root !== document;
+    const context = { root, shadow, style: null, observer: null };
+    contexts.set(root, context);
+    context.observer = new MutationObserver((changes) => {
+      for (const change of changes) {
+        const target = change.target;
+        if (![1, 11].includes(target.nodeType) || target.closest?.('[data-hsdm-owned],style,script')) continue;
+        if (change.type === "attributes") enqueue(target);
+        else if (change.type === "childList") {
+          change.addedNodes.forEach((node) => { if (node.nodeType === 1) enqueue(node); });
+          if (change.removedNodes.length && frame === null) frame = requestAnimationFrame(flush);
+        }
+      }
+    });
+    context.observer.observe(shadow ? root : document.documentElement, {
+      childList: true, subtree: true, attributes: true, attributeFilter: ["class", "style"]
+    });
+    return context;
+  }
+
+  function ensureStyle(context) {
+    if (context.style?.isConnected) return;
+    const style = document.createElement("style");
+    style.id = context.shadow ? "hsdm-linkedin-shadow" : "hsdm-linkedin";
+    style.dataset.hsdmOwned = "true";
+    (context.shadow ? context.root : document.head || document.documentElement).append(style);
+    context.style = style;
   }
 
   function cssFor(element) {
@@ -30,30 +61,50 @@
     return declarations.join("");
   }
 
+  function chatCss() {
+    const p = `:host-context(${prefix})`;
+    return `
+${p}{color-scheme:dark;color:${THEME.text};}
+${p} :is(.msg-overlay-list-bubble,.msg-overlay-conversation-bubble){background:${THEME.surface} !important;color:${THEME.text} !important;border:1px solid ${THEME.divider} !important;box-shadow:0 8px 24px rgba(0,0,0,.3) !important;}
+${p} :is(.msg-overlay-bubble-header,.msg-overlay-conversation-bubble-header){background:${THEME.raised} !important;color:${THEME.text} !important;border-bottom:1px solid ${THEME.divider} !important;}
+${p} :is(.msg-s-message-list-container,.msg-s-message-list-content,.msg-convo-wrapper,.msg-overlay-conversation-bubble__content-wrapper,.msg-conversation-list-container){background:${THEME.surface} !important;color:${THEME.text} !important;}
+${p} :is(.msg-form,.msg-form__footer,.msg-form__msg-content-container){background:${THEME.raised} !important;color:${THEME.text} !important;border-color:${THEME.divider} !important;}
+${p} :is(.msg-form__contenteditable,textarea,input){background:${THEME.input} !important;color:${THEME.text} !important;caret-color:${THEME.text} !important;border-color:${THEME.controlBorder} !important;}
+${p} [contenteditable=true]{color:${THEME.text} !important;caret-color:${THEME.text} !important;}
+${p} :is(button,a) svg[fill=currentColor]{color:inherit !important;fill:currentColor;}
+${p} :focus-visible{outline:2px solid ${THEME.focus} !important;outline-offset:2px;}
+${p} ::placeholder{color:${THEME.muted} !important;opacity:1;}
+${p} ::selection{background:#62533b;color:${THEME.text};}
+`;
+  }
+
   function flush() {
     frame = null;
     if (!active) return;
-    if (!style?.isConnected) {
-      style = document.createElement("style");
-      style.id = "hsdm-linkedin";
-      style.dataset.hsdmOwned = "true";
-      (document.head || document.documentElement).append(style);
-    }
     if (dirty.size) {
       const candidates = new Set(queue.slice(offset));
-      // Changes to an ancestor can affect inherited colors throughout its subtree.
+      // Open shadow trees need their own stylesheet and observer. LinkedIn's
+      // interop messaging widgets are outside the main document's CSS scope.
       for (const root of dirty) {
         if (!root.isConnected) continue;
-        candidates.add(root);
-        root.querySelectorAll("*").forEach((node) => candidates.add(node));
+        const nodes = [...root.querySelectorAll("*")];
+        if (root.nodeType === 1) nodes.unshift(root);
+        for (const node of nodes) {
+          candidates.add(node);
+          if (node.shadowRoot && !contexts.has(node.shadowRoot)) {
+            register(node.shadowRoot);
+            dirty.add(node.shadowRoot);
+          }
+        }
       }
       dirty.clear();
       queue = [...candidates].filter((node) => !node.closest(skip));
       offset = 0;
     }
-    // Always measure original site colors, so repeated scans never compound.
-    // The sheet is restored within this synchronous callback before any paint.
-    style.disabled = true;
+    for (const context of contexts.values()) ensureStyle(context);
+    // Disable every generated sheet together, including shadow styles, so
+    // measuring inherited colors never compounds our previous transformations.
+    for (const context of contexts.values()) context.style.disabled = true;
     try {
       const end = Math.min(offset + 250, queue.length);
       for (; offset < end; offset++) {
@@ -66,17 +117,30 @@
         element.setAttribute("data-hsdm-li", id);
         records.set(element, { id, css });
       }
-    } finally { style.disabled = false; }
-    let css = "";
+    } finally {
+      for (const context of contexts.values()) context.style.disabled = false;
+    }
+    const cssByRoot = new Map();
     for (const [element, record] of records) {
       if (!element.isConnected) { records.delete(element); continue; }
+      const currentRoot = element.getRootNode?.() || document;
+      const context = contexts.get(currentRoot);
+      if (!context) { enqueue(element); continue; }
       const target = `[data-hsdm-li="${record.id}"]`;
-      css += `${prefix}${target},${prefix} ${target}{${record.css}}\n`;
+      const p = context.shadow ? `:host-context(${prefix})` : prefix;
+      const rule = context.shadow ? `${p} ${target}{${record.css}}\n` : `${p}${target},${p} ${target}{${record.css}}\n`;
+      cssByRoot.set(currentRoot, (cssByRoot.get(currentRoot) || "") + rule);
     }
-    const text = `@media screen{${css}}`;
-    if (style.textContent !== text) style.textContent = text;
-    if (offset < queue.length) frame = requestAnimationFrame(flush);
-    else { queue = []; offset = 0; }
+    for (const [root, context] of contexts) {
+      if (context.shadow && !root.host.isConnected) {
+        context.observer.disconnect(); context.style.remove(); contexts.delete(root); continue;
+      }
+      const text = `@media screen{${cssByRoot.get(root) || ""}${context.shadow ? chatCss() : ""}}`;
+      if (context.style.textContent !== text) context.style.textContent = text;
+    }
+    if (offset < queue.length || dirty.size) {
+      if (frame === null) frame = requestAnimationFrame(flush);
+    } else { queue = []; offset = 0; }
   }
 
   function onLoad(event) {
@@ -86,30 +150,26 @@
   function start() {
     if (active) return;
     active = true;
-    observer = new MutationObserver((changes) => {
-      for (const change of changes) {
-        const target = change.target;
-        if (target.nodeType !== 1 || target.closest?.("#hsdm-linkedin,style,script")) continue;
-        if (change.type === "attributes") enqueue(target);
-        else if (change.type === "childList") {
-          change.addedNodes.forEach((node) => { if (node.nodeType === 1) enqueue(node); });
-          // Prune detached nodes even when a render only removes content.
-          if (change.removedNodes.length && frame === null) frame = requestAnimationFrame(flush);
-        }
-      }
-    });
-    observer.observe(document.documentElement, { childList: true, subtree: true, attributes: true, attributeFilter: ["class", "style"] });
+    register(document);
     document.addEventListener("load", onLoad, true);
+    // attachShadow() on an existing host emits no DOM mutation. Check the
+    // known chat host for this late-attachment case without scanning the feed.
+    timer = setInterval(() => {
+      if (document.hidden) return;
+      const root = document.getElementById("interop-outlet")?.shadowRoot;
+      if (root && !contexts.has(root)) { register(root); enqueue(root); }
+    }, 1000);
     enqueue(document.documentElement);
   }
 
   function stop() {
     active = false;
-    observer?.disconnect();
     document.removeEventListener("load", onLoad, true);
+    clearInterval(timer);
+    for (const context of contexts.values()) { context.observer.disconnect(); context.style?.remove(); }
+    contexts.clear();
     if (frame !== null) cancelAnimationFrame(frame);
     frame = null;
-    style?.remove(); style = null;
     for (const element of records.keys()) element.removeAttribute("data-hsdm-li");
     records.clear(); dirty.clear(); queue = []; offset = 0;
   }

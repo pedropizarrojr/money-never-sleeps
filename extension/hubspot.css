@@ -2,9 +2,9 @@
    Keep the entire navigation rail on one surface, including empty space. */
 @media screen {
   html[data-hsdm-theme="dark"] #hs-vertical-nav {
-    background-color: #252e3b !important;
-    color: #dce5f0 !important;
-    --trellis-color-global-shell-fill-nav-item-default: #252e3b !important;
+    background-color: #33302e !important;
+    color: #e3e0de !important;
+    --trellis-color-global-shell-fill-nav-item-default: #33302e !important;
   }
   html[data-hsdm-theme="dark"] #hs-vertical-nav :is(
     #sidebar-scrollable-pane, .primary-nav-menu, [role="menu"],
@@ -20,30 +20,30 @@
     [class*="ScrollArrow"], [class*="ScrollOverhang"],
     [class*="VerticalNavContainer"]
   ) {
-    background-color: #252e3b !important;
+    background-color: #33302e !important;
     background-image: none !important;
     box-shadow: none !important;
   }
   html[data-hsdm-theme="dark"] #hs-vertical-nav .primary-nav-menu-item {
-    color: #dce5f0 !important;
+    color: #e3e0de !important;
     background-color: transparent !important;
   }
   html[data-hsdm-theme="dark"] #hs-vertical-nav .primary-nav-menu-item:is(:hover, :focus-within) {
-    background-color: #344153 !important;
-    color: #eef3f9 !important;
+    background-color: #33302e !important;
+    color: #f0ece7 !important;
   }
   html[data-hsdm-theme="dark"] #hs-vertical-nav :is(
     .primary-nav-menu-item.isHighlighted,
     .primary-nav-menu-item.isHighlighted [class*="PrimarySidebarItemLayout__StyledItemWrapper"],
     [aria-current="page"], [aria-selected="true"]
   ) {
-    background-color: #2a425c !important;
-    color: #e8f2ff !important;
+    background-color: #46423d !important;
+    color: #f0ece7 !important;
   }
   html[data-hsdm-theme="dark"] #hs-vertical-nav :is(button, a) {
     color: inherit !important;
   }
   html[data-hsdm-theme="dark"] #hs-vertical-nav .primary-nav-menu-item.isHighlighted {
-    box-shadow: inset 3px 0 #93c5fd !important;
+    box-shadow: inset 3px 0 #d6b77c !important;
   }
 }

@@ -3,8 +3,8 @@
   "use strict";
   const MODES = ["system", "dark", "light"];
   const THEME = Object.freeze({
-    page: "#202631", surface: "#283240", raised: "#344153", input: "#252e3b",
-    text: "#dce4ef", muted: "#abb8c9", controlBorder: "#8796aa", focus: "#93c5fd"
+    page: "#262422", surface: "#2d2b28", raised: "#33302e", input: "#242220",
+    text: "#e3e0de", muted: "#b8b2ac", divider: "#625d57", controlBorder: "#938d85", focus: "#d6b77c"
   });
   const normalizeMode = (mode) => MODES.includes(mode) ? mode : "system";
   const isDark = (mode, systemDark) => normalizeMode(mode) === "dark" ||
@@ -62,26 +62,27 @@
     const rgba = parseColor(value);
     if (!rgba || rgba[3] === 0 || !role) return value;
     let [h, s, l] = toHsl(rgba);
+    let alpha = rgba[3];
     const neutral = Math.max(...rgba.slice(0, 3)) - Math.min(...rgba.slice(0, 3)) < 28;
     if (role === "background") {
       // Lift opaque near-black UI surfaces into charcoal. Keep translucent
       // backdrops and saturated fills unchanged; media pixels are never read.
-      if (neutral && l < 0.10 && rgba[3] >= 0.95) {
-        return `hsl(216 19% 17% / ${rgba[3].toFixed(3)})`;
+      if (neutral && l < 0.52 && alpha >= 0.95) {
+        return `hsl(30 6% ${(Math.max(0.145, Math.min(0.27, l)) * 100).toFixed(1)}% / ${alpha.toFixed(3)})`;
       }
       // Leave saturated status fills and already-dark chrome alone.
       if (l < 0.52) return value;
-      l = neutral ? 0.17 + (1 - l) * 0.22 : 0.20 + (1 - l) * 0.20;
-      if (neutral) { h = 216; s = 0.19; } else { s = Math.min(s, 0.45); }
+      l = neutral ? 0.16 + (1 - l) * 0.22 : 0.20 + (1 - l) * 0.20;
+      if (neutral) { h = 30; s = 0.06; } else { s = Math.min(s, 0.35); }
     } else if (role === "foreground") {
       if (l > 0.72) return value;
       l = neutral ? 0.9 - l * 0.22 : Math.max(0.72, 1 - l * 0.42);
-      if (neutral) { h = 213; s = 0.24; }
+      if (neutral) { h = 30; s = 0.06; }
     } else {
-      l = neutral ? 0.28 : Math.max(0.38, Math.min(0.55, l));
-      if (neutral) { h = 216; s = 0.16; }
+      l = neutral ? 0.38 : Math.max(0.38, Math.min(0.55, l));
+      if (neutral) { h = 30; s = 0.05; alpha = Math.max(0.75, alpha); }
     }
-    return `hsl(${h.toFixed(1)} ${(s * 100).toFixed(1)}% ${(l * 100).toFixed(1)}% / ${rgba[3].toFixed(3)})`;
+    return `hsl(${h.toFixed(1)} ${(s * 100).toFixed(1)}% ${(l * 100).toFixed(1)}% / ${alpha.toFixed(3)})`;
   }
 
   function transformValue(property, value) {
